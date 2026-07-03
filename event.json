@@ -1,10 +1,19 @@
 {
   "version": 1,
-  "title": "示例活动",
   "themeCar": "",
+  "title": "",
   "tools": [],
   "stages": [],
   "milestones": [],
   "clubRewards": [],
-  "packs": {}
+  "packs": {
+    "bluePrintBlue": false,
+    "bluePrintBlueCond": 0,
+    "bluePrintGold": false,
+    "bluePrintGoldCond": 0,
+    "keyBlue": false,
+    "keyBlueCond": 0,
+    "keyGold": false,
+    "keyGoldCond": 0
+  }
 }
