@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>狂野飙车9 · 车辆小助手</title>
+    <!-- 你提供的真实 Raw 地址已在代码中配置好了 -->
+    <script src="vehiclesData.js"></script>
+    <script src="masterData.js"></script>
+    <style>
+        /* ===== 全部样式（与之前完全一致） ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body.light { background-color: #f2f4f8; color: #1e293b; }
+        body.dark { background-color: #0f172a; color: #e2e8f0; }
+        body.dark .toolbar, body.dark .car-card, body.dark .no-data, body.dark .compare-card, body.dark .help-card,
+        body.dark .stats-panel, body.dark .detail-modal-content, body.dark .master-card, body.dark .master-progress-bar,
+        body.dark .home-card, body.dark .editor-section, body.dark .editor-tool-row, body.dark .editor-stage-row,
+        body.dark .editor-milestone-row, body.dark .calculator-section, body.dark .calc-vehicle-row, body.dark .calc-stage-row,
+        body.dark .calc-reward-row {
+            background-color: #1e293b; color: #e2e8f0;
+        }
+        body.dark .toolbar select, body.dark .toolbar input, body.dark .brand-select, body.dark .league-select,
+        body.dark .search-input, body.dark .editor-input, body.dark .editor-select {
+            background-color: #334155; color: #f1f5f9; border-color: #475569;
+        }
+        body.dark .sort-section, body.dark .mode-toggle, body.dark .rank-badge, body.dark .master-perf-cell {
+            background-color: #334155; color: #cbd5e1;
+        }
+        body.dark .bar-bg { background-color: #334155; }
+        body.dark .airspeed-box { background-color: #0f172a; }
+        body.dark .remark { background-color: #0f172a; border-color: #475569; }
+        body.dark .blueprint-row { background-color: #0f172a; }
+        body.dark .checkbox-container { background-color: #334155; }
+        body.dark .stats-item { background-color: #334155; }
+        body.dark .stats-number { color: #fbbf24; }
+        body.dark .stats-label { color: #94a3b8; }
+        body.dark .detail-stat-label { color: #94a3b8; }
+        body.dark .detail-value { color: #f1f5f9; }
+        body.dark .random-highlight { box-shadow: 0 0 0 3px #fbbf24, 0 8px 24px rgba(251, 191, 36, 0.3); }
+        body.dark .master-card { border-color: #334155; }
+        body.dark .master-task-id { background-color: #dc2626 !important; }
+        body.dark .master-car-name { color: #f1f5f9; }
+        body.dark .master-tool-row { border-bottom-color: #334155; }
+        body.dark .master-perf-cell { border-color: #475569; }
+        body.dark .master-perf-cell.locked { background-color: #ef4444; color: white; }
+        body.dark .master-perf-cell.unlocked { color: #1e293b; }
+        body.dark .master-perf-cell.dim { background-color: #334155; color: #94a3b8; }
+        body.dark .master-lock-overlay { background: rgba(15, 23, 42, 0.85); }
+        body.dark .home-card { border-color: #334155; }
+        body.dark .home-card .home-icon { color: #fbbf24; }
+        body.dark .editor-section { border-color: #334155; }
+        body.dark .editor-tool-row { border-bottom-color: #334155; }
+        body.dark .editor-stage-row { border-bottom-color: #334155; }
+        body.dark .editor-milestone-row { border-bottom-color: #334155; }
+        body.dark .calculator-section { border-color: #334155; }
+        body.dark .calc-vehicle-row { border-bottom-color: #334155; }
+        body.dark .calc-stage-row { border-bottom-color: #334155; }
+        body.dark .calc-reward-row { border-bottom-color: #334155; }
+        body.dark .calc-progress-fill { background-color: #22c55e; }
+
+        body, .toolbar, .car-card, .no-data, .compare-card, .help-card, .stats-panel, .sort-section,
+        .mode-toggle, .rank-badge, .bar-bg, .airspeed-box, .remark, .blueprint-row, .checkbox-container,
+        .stats-item, .detail-modal-content, .master-card, .master-progress-bar, .master-perf-cell, .master-lock-overlay,
+        .home-card, .editor-section, .editor-tool-row, .editor-stage-row, .editor-milestone-row, .calculator-section,
+        .calc-vehicle-row, .calc-stage-row, .calc-reward-row, .calc-progress-fill {
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .app-container { max-width: 1400px; margin: 0 auto; padding: 16px 20px 100px; position: relative; }
+
+        /* ===== 主页 ===== */
+        #homePage { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 70vh; gap: 30px; }
+        .home-title { font-size: 2.2rem; font-weight: 700; color: #3b82f6; text-shadow: 0 2px 8px rgba(59, 130, 246, 0.15); margin-bottom: 10px; }
+        body.dark .home-title { color: #60a5fa; }
+        .home-cards { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+        .home-card { background: white; border-radius: 32px; padding: 40px 50px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: center; min-width: 220px; flex: 1 0 auto; max-width: 300px; }
+        .home-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12); }
+        .home-card .home-icon { font-size: 3.5rem; display: block; margin-bottom: 12px; }
+        .home-card .home-label { font-size: 1.3rem; font-weight: 700; color: #1e293b; }
+        body.dark .home-card .home-label { color: #f1f5f9; }
+        .home-card .home-desc { font-size: 0.85rem; color: #6c757d; margin-top: 6px; }
+        body.dark .home-card .home-desc { color: #94a3b8; }
+
+        /* ===== 功能容器 ===== */
+        .function-container { display: none; }
+        .function-container.active { display: block; }
+
+        /* ===== 工具栏 ===== */
+        .toolbar { background: white; border-radius: 28px; padding: 14px 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; position: sticky; top: 0; z-index: 100; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .toolbar.hidden { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+        .back-home-btn { background: #e2e8f0; border: none; padding: 6px 16px; border-radius: 40px; font-weight: 600; cursor: pointer; font-size: 0.85rem; color: #1e293b; transition: 0.2s; font-family: inherit; }
+        .back-home-btn:hover { background: #cbd5e1; }
+        body.dark .back-home-btn { background: #334155; color: #e2e8f0; }
+        body.dark .back-home-btn:hover { background: #475569; }
+
+        /* ===== 统计面板 ===== */
+        .stats-panel { background: white; border-radius: 24px; padding: 18px 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; }
+        .stats-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+        .stats-item { display: flex; align-items: baseline; gap: 4px; background: #f0f2f5; padding: 4px 14px 4px 12px; border-radius: 40px; font-size: 0.8rem; }
+        .stats-number { font-weight: 800; font-size: 1.1rem; color: #1e293b; }
+        .stats-label { color: #6c757d; font-weight: 500; }
+        .stats-divider { color: #cbd5e1; font-weight: 300; }
+        .stats-level-badge { display: inline-block; font-weight: 700; font-size: 0.7rem; padding: 0 6px; border-radius: 4px; color: white; margin-right: 2px; }
+        .stats-level-badge.R { background: #dc2626; }
+        .stats-level-badge.S { background: #8b5cf6; }
+        .stats-level-badge.A { background: #3b82f6; }
+        .stats-level-badge.B { background: #22c55e; }
+        .stats-level-badge.C { background: #f59e0b; }
+        .stats-level-badge.D { background: #6b7280; }
+
+        /* ===== 车辆卡片 ===== */
+        .cars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        @media (max-width: 800px) { .cars-grid { grid-template-columns: 1fr; } }
+        .car-card { background: white; border-radius: 24px; padding: 18px 18px 22px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05); transition: transform 0.15s ease, box-shadow 0.2s, background-color 0.2s; display: flex; flex-direction: column; gap: 12px; position: relative; cursor: default; }
+        .car-card:hover { box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10); transform: translateY(-2px); }
+        .checkbox-container { position: absolute; top: 16px; right: 16px; width: 24px; height: 24px; background: white; border: 2px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
+        .checkbox-container.selected { background: #3b82f6; border-color: #3b82f6; }
+        .checkbox-container.selected::after { content: "✓"; color: white; font-size: 14px; }
+        .car-level { display: inline-block; background-color: #dc2626; color: white; font-weight: bold; font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; margin-right: 8px; }
+        .row-name { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+        .car-name { font-size: 1.2rem; font-weight: 700; color: #0a1927; }
+        body.dark .car-name { color: #f1f5f9; }
+        .league-badge { font-size: 0.65rem; font-weight: 600; padding: 2px 10px; border-radius: 20px; color: white; }
+        .tag { font-size: 0.6rem; font-weight: 600; padding: 2px 10px; border-radius: 20px; color: white; }
+        .tag-slstream { background-color: #7dd3fc; color: #1e293b; }
+        .tag-classic { background-color: #1e40af; }
+        .tag-duel { background-color: #9333ea; }
+        .row-stats { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
+        .star-rating { font-size: 0.85rem; font-weight: 600; color: #f5b042; letter-spacing: 1px; }
+        .nickname { font-size: 0.75rem; color: #6c757d; font-style: normal; font-weight: 300; flex: 1; text-align: center; font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif; }
+        body.dark .nickname { color: #94a3b8; }
+        .perf-score { font-weight: 700; color: #f5a623; font-size: 0.9rem; background: #fff2e0; padding: 2px 10px; border-radius: 20px; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+        body.dark .perf-score { background: #334155; color: #fbbf24; }
+        .rank-league, .rank-global { font-size: 0.7rem; font-weight: normal; }
+        .rank-league strong, .rank-global strong { font-weight: 700; }
+        .blueprint-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 14px; background: #f9fafb; padding: 6px 12px; border-radius: 48px; }
+        .bp-block { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 10px; font-weight: bold; font-size: 0.85rem; border-radius: 8px; background-color: #06b6d4; color: white; flex: 0 0 auto; min-width: 40px; }
+        .key-block { border-radius: 32px; gap: 4px; font-size: 1.1rem; }
+        .total-block { background: transparent; border: 2px solid; font-weight: bold; padding: 0 12px; height: 36px; display: inline-flex; align-items: center; border-radius: 8px; font-size: 0.85rem; }
+        .two-columns { display: flex; gap: 16px; margin-top: 4px; }
+        .left-stats { flex: 1.6; }
+        .right-extra { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+        .stat-item { margin-bottom: 10px; }
+        .stat-label { font-size: 0.65rem; text-transform: uppercase; color: #5b6e8c; letter-spacing: 0.5px; margin-bottom: 2px; }
+        body.dark .stat-label { color: #94a3b8; }
+        .stat-value { font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+        .stat-percentages { display: inline-flex; gap: 10px; font-size: 0.7rem; font-weight: normal; align-items: baseline; }
+        .stat-percentages strong { font-weight: 700; }
+        .bar-bg { background-color: #e2e8f0; border-radius: 4px; height: 4px; width: 100%; margin-top: 4px; overflow: hidden; }
+        .bar-fill { background-color: #3b82f6; height: 4px; width: 0%; border-radius: 4px; }
+        .airspeed-box { background: #f8fafc; border-radius: 18px; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; }
+        body.dark .airspeed-box { background: #0f172a; border: 1px solid #334155; }
+        .airspeed-item { text-align: center; }
+        .airspeed-label { font-size: 0.6rem; color: #475569; }
+        .airspeed-value { font-weight: 800; font-size: 0.95rem; color: #0f172a; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+        body.dark .airspeed-value { color: #e2e8f0; }
+        .nitro-part { font-weight: 800; }
+        .parts-row { display: flex; gap: 8px; justify-content: center; align-items: center; margin-top: 2px; }
+        .feel-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+        .feel-tag { font-size: 0.65rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; color: white; }
+        .feel-ship, .feel-overrated { background-color: #ef4444; }
+        .feel-wheelchair, .feel-bounce { background-color: #eab308; color: #1e293b; }
+        .feel-stable { background-color: #22c55e; }
+        .remark { margin-top: 6px; padding: 6px 10px; border: 1px dashed #9ca3af; border-radius: 14px; background-color: #f9fafb; font-size: 0.7rem; color: #374151; line-height: 1.4; }
+        .hexagon { width: 38px; height: 44px; background: #cbd5e1; clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; color: white; }
+        .hex-blue { background-color: #3b82f6; }
+        .hex-purple { background-color: #c026d3; }
+        .hex-gold { background-color: #eab308; }
+        .no-data { text-align: center; padding: 60px; background: white; border-radius: 40px; color: #6c757d; }
+
+        /* ===== 详情弹窗 ===== */
+        .detail-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 3000; padding: 20px; }
+        .detail-modal-content { background: transparent; max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 0; position: relative; }
+        .detail-modal-content .car-card { cursor: default; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
+        .detail-modal-content .detail-close { position: sticky; top: 10px; float: right; background: #e2e8f0; border: none; font-size: 20px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 10; margin-bottom: -40px; margin-right: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+        .detail-modal-content .detail-close:hover { background: #cbd5e1; }
+        body.dark .detail-modal-content .detail-close { background: #334155; color: #e2e8f0; }
+        body.dark .detail-modal-content .detail-close:hover { background: #475569; }
+
+        /* ===== 模态框 ===== */
+        .help-modal, .compare-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .help-card, .compare-card { background: white; border-radius: 32px; max-width: 700px; width: 90%; padding: 28px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .close-help, .close-modal-btn { position: absolute; top: 16px; right: 20px; background: #e2e8f0; border: none; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+        .compare-row { margin-bottom: 20px; }
+        .compare-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #3b82f6; padding-left: 12px; }
+        .compare-stat { display: flex; align-items: flex-start; gap: 16px; }
+        .bar-compare { flex: 2; }
+        .bar-pair { margin-bottom: 6px; }
+        .bar-label { font-size: 0.7rem; font-weight: 600; margin-bottom: 2px; }
+        .bar-red { background-color: #ef4444; height: 4px; border-radius: 4px; margin: 2px 0; }
+        .bar-green { background-color: #22c55e; height: 4px; border-radius: 4px; margin: 2px 0; }
+        .diff-value { width: 70px; text-align: right; font-weight: bold; font-size: 0.9rem; }
+        .nitro-compare { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .nitro-item { display: flex; justify-content: space-between; font-size: 0.85rem; }
+        .diff-positive { color: #22c55e; }
+        .diff-negative { color: #ef4444; }
+        .diff-zero { color: #3b82f6; }
+        .diff-unknown { color: #6c757d; }
+        .close-compare { margin-top: 20px; text-align: center; }
+
+        /* ===== 浮动按钮组 ===== */
+        .float-group { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 12px; z-index: 999; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .float-group.hidden { transform: translateX(80px); opacity: 0; pointer-events: none; }
+        .float-btn { width: 56px; height: 56px; border-radius: 50%; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); cursor: pointer; font-size: 24px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .float-btn:hover { transform: scale(1.05); background: #2563eb; }
+        .float-btn.active { background: #ef4444; }
+        .theme-btn { background: #1e293b; }
+        .theme-btn:hover { background: #334155; }
+        body.dark .theme-btn { background: #facc15; color: #0f172a; }
+        .back-to-top { background: #1e293b; }
+        .back-to-top:hover { background: #0f172a; }
+        .exit-compare-btn { position: fixed; top: 20px; right: 20px; background-color: #3b82f6; color: white; border: none; border-radius: 40px; padding: 10px 20px; font-size: 1rem; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+
+        /* ===== 等级导航 ===== */
+        .level-nav { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: row; gap: 8px; z-index: 1000; background: rgba(30, 41, 59, 0.92); backdrop-filter: blur(8px); border-radius: 60px; padding: 6px 14px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+        .level-nav button { width: 40px; height: 40px; border-radius: 50%; background: #1e293b; color: white; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+        .level-nav button:hover { background: #3b82f6; transform: scale(1.05); }
+        .level-nav button.active { background: #3b82f6; box-shadow: 0 0 0 2px white; }
+
+        /* ===== 大师计算器样式 ===== */
+        .master-container { display: none; flex-direction: column; gap: 24px; }
+        .master-container.visible { display: flex; }
+        .master-progress-bar { position: sticky; top: 80px; z-index: 50; background: white; border-radius: 20px; padding: 14px 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; border: 2px solid #ef4444; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .master-progress-bar .title { font-weight: 700; font-size: 1.1rem; color: #ef4444; }
+        .master-progress-bar .progress-text { font-weight: 600; font-size: 1rem; color: #ef4444; }
+        .master-progress-bar .progress-track { flex: 1; min-width: 150px; height: 8px; background: #e2e8f0; border-radius: 8px; overflow: hidden; }
+        .master-progress-bar .progress-fill { height: 100%; background: #ef4444; border-radius: 8px; transition: width 0.2s; }
+        .master-progress-bar .progress-percent { font-weight: 700; color: #ef4444; font-size: 1rem; min-width: 60px; text-align: right; }
+        .master-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-top: -6px; margin-bottom: 10px; padding: 0 4px; }
+        .master-controls button { background: #3b82f6; color: white; border: none; padding: 6px 20px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        .master-controls button:hover { transform: scale(1.03); }
+        .master-controls .btn-clear { background: #ef4444; }
+        .master-controls .btn-clear:hover { background: #dc2626; }
+        .master-controls .btn-fill { background: #22c55e; }
+        .master-controls .btn-fill:hover { background: #16a34a; }
+        .master-card { background: white; border-radius: 24px; padding: 20px 24px 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; position: relative; overflow: hidden; }
+        .master-card.locked { opacity: 0.6; pointer-events: none; }
+        .master-lock-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 24px; font-weight: 700; font-size: 1.2rem; color: #dc2626; backdrop-filter: blur(2px); pointer-events: none; }
+        .master-lock-overlay span { background: #dc2626; color: white; padding: 8px 24px; border-radius: 40px; font-size: 1.1rem; }
+        .master-task-header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+        .master-task-id { background: #dc2626; color: white; padding: 4px 16px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
+        .master-car-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .master-car-name { font-size: 1.2rem; font-weight: 700; }
+        .master-car-level { display: inline-block; background-color: #dc2626; color: white; font-weight: bold; font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; }
+        .master-key-icon { font-size: 1.1rem; margin-left: 2px; }
+        .master-stars { font-size: 0.9rem; color: #f5b042; letter-spacing: 1px; }
+        .master-max-perf { font-weight: 700; color: #f5a623; background: #fff2e0; padding: 2px 12px; border-radius: 20px; font-size: 0.9rem; margin-left: auto; }
+        body.dark .master-max-perf { background: #334155; color: #fbbf24; }
+        .master-progress-row { display: flex; align-items: center; gap: 16px; margin: 10px 0 14px; flex-wrap: wrap; }
+        .master-progress-row .track { flex: 1; height: 6px; background: #e2e8f0; border-radius: 6px; overflow: hidden; min-width: 100px; }
+        .master-progress-row .fill { height: 100%; background: #ef4444; border-radius: 6px; transition: width 0.2s; }
+        .master-progress-row .label { font-weight: 600; color: #ef4444; font-size: 0.9rem; white-space: nowrap; }
+        .master-tool-section { margin-top: 6px; }
+        .master-tool-row { padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+        .master-tool-row:last-child { border-bottom: none; }
+        .master-tool-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+        .master-tool-name { font-weight: 600; font-size: 1rem; }
+        .master-tool-level { display: inline-block; background-color: #dc2626; color: white; font-weight: bold; font-size: 0.7rem; padding: 1px 8px; border-radius: 20px; }
+        .master-tool-key { font-size: 1rem; }
+        .master-tool-master-badge { background: #dc2626; color: white; font-weight: 600; font-size: 0.65rem; padding: 1px 8px; border-radius: 12px; margin-left: 4px; }
+        .master-tool-stars { font-size: 0.8rem; color: #f5b042; letter-spacing: 1px; margin-left: auto; }
+        .master-tool-max-perf { font-weight: 700; color: #f5a623; font-size: 0.9rem; margin-left: 10px; }
+        body.dark .master-tool-max-perf { color: #fbbf24; }
+        .master-perf-cells { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; align-items: center; }
+        .master-perf-cell { padding: 4px 12px; border-radius: 16px; font-weight: 600; font-size: 0.85rem; background: #e2e8f0; color: #1e293b; cursor: pointer; transition: 0.15s; border: 1px solid #cbd5e1; user-select: none; }
+        .master-perf-cell.locked { background: #ef4444; color: white; border-color: #ef4444; }
+        .master-perf-cell.unlocked { background: var(--cell-color, #3b82f6); color: white; border-color: var(--cell-color, #3b82f6); }
+        .master-perf-cell.dim { background: #e2e8f0; color: #94a3b8; border-color: #cbd5e1; cursor: default; }
+        .master-perf-cell:hover:not(.dim) { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+        .master-perf-cell.unlock-label { background: #ef4444; color: white; border-color: #ef4444; padding: 4px 14px; }
+        .master-perf-cell.unlock-label.dim { background: #e2e8f0; color: #94a3b8; border-color: #cbd5e1; cursor: default; }
+
+        /* ===== 特殊赛事 - 编辑器UI ===== */
+        .editor-section, .calculator-section { background: white; border-radius: 24px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; }
+        .editor-section h3, .calculator-section h3 { font-size: 1.2rem; margin-bottom: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .editor-section .editor-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .editor-input, .editor-select { padding: 6px 14px; border-radius: 40px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.9rem; font-family: inherit; outline: none; }
+        .editor-input:focus, .editor-select:focus { border-color: #3b82f6; }
+        .editor-btn { background: #3b82f6; color: white; border: none; padding: 6px 18px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        .editor-btn:hover { background: #2563eb; transform: scale(1.02); }
+        .editor-btn-danger { background: #ef4444; }
+        .editor-btn-danger:hover { background: #dc2626; }
+        .editor-btn-success { background: #22c55e; }
+        .editor-btn-success:hover { background: #16a34a; }
+        .editor-search-results { max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 4px 0; margin-top: 4px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); display: none; }
+        .editor-search-results.visible { display: block; }
+        .editor-search-result { padding: 6px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
+        .editor-search-result:hover { background: #f1f5f9; }
+        body.dark .editor-search-result:hover { background: #334155; }
+        .editor-search-result .car-level { font-size: 0.7rem; padding: 1px 8px; }
+        .editor-tool-list, .editor-stage-list, .editor-milestone-list, .editor-club-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+        .editor-tool-row, .editor-milestone-row, .editor-club-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; }
+        body.dark .editor-tool-row, body.dark .editor-milestone-row, body.dark .editor-club-row { background: #0f172a; }
+        .editor-tool-row .tool-name { font-weight: 600; font-size: 0.95rem; }
+        .editor-tool-row .tool-level { font-size: 0.75rem; padding: 1px 8px; border-radius: 20px; background: #dc2626; color: white; }
+
+        .editor-stage-row { display: flex; flex-direction: row; align-items: stretch; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 12px; }
+        body.dark .editor-stage-row { background: #1e293b; }
+        .editor-stage-left-bar { writing-mode: vertical-rl; background: linear-gradient(180deg, #2a4a8a, #0a1a3a); color: white; padding: 12px 6px; font-weight: 700; font-size: 0.9rem; letter-spacing: 2px; display: flex; align-items: center; justify-content: center; min-width: 40px; border-right: 1px solid rgba(255,255,255,0.1); }
+        .editor-stage-content { flex: 1; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+        .stage-header-controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; width: 100%; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+        body.dark .stage-header-controls { border-bottom-color: #334155; }
+
+        .stage-task-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            overflow-x: visible;
+            padding: 8px 4px 12px;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .stage-task-card { flex-shrink: 0; min-width: 160px; max-width: 200px; border-radius: 12px; padding: 12px 10px; display: flex; flex-direction: column; align-items: center; border: 2px solid; position: relative; }
+        .stage-task-card.card-0star { background: linear-gradient(135deg, #0a2a4a, #1a4a6a); border-color: #3a8ac0; }
+        .stage-task-card.card-star-locked { background: linear-gradient(135deg, #3a1a2a, #6a1a3a); border-color: #c50049; }
+        .task-card-top { display: flex; justify-content: space-between; width: 100%; font-size: 0.7rem; color: rgba(255,255,255,0.9); font-weight: 600; margin-bottom: 4px; }
+        .task-card-icon { width: 56px; height: 56px; display: flex; justify-content: center; align-items: center; margin: 2px 0; }
+        .task-card-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; margin: 6px 0; background: rgba(0,0,0,0.3); }
+        .task-card-circle.circle-blue { border-color: #3b82f6; }
+        .task-card-circle.circle-red { border-color: #ef4444; }
+        .task-card-circle input { background: transparent; border: none; text-align: center; color: white; font-weight: 700; font-size: 0.9rem; width: 100%; height: 100%; outline: none; }
+        .task-card-controls { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+        .task-card-controls .ctrl-row { display: flex; align-items: center; gap: 4px; font-size: 0.7rem; color: rgba(255,255,255,0.8); flex-wrap: wrap; justify-content: center; }
+        .task-card-controls select, .task-card-controls input { font-size: 0.7rem; padding: 2px 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; }
+        .task-card-controls .btn-remove-task { background: #ef4444; border: none; border-radius: 4px; color: white; padding: 2px 6px; font-size: 0.6rem; cursor: pointer; }
+
+        .editor-milestone-row, .editor-club-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px; }
+
+        /* ===== 特殊赛事 - 计算器UI ===== */
+        .calc-vehicle-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 20px; padding: 6px 0; border-bottom: 1px solid #e2e8f0; }
+        .calc-vehicle-row .vehicle-name { font-weight: 600; font-size: 1rem; min-width: 120px; }
+        .calc-vehicle-row .vehicle-level { font-size: 0.75rem; padding: 1px 8px; border-radius: 20px; background: #dc2626; color: white; }
+        .calc-vehicle-row .star-selector { display: flex; gap: 4px; align-items: center; flex: 1; justify-content: flex-start; }
+        .calc-vehicle-row .star-selector button { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #cbd5e1; background: transparent; font-weight: 700; cursor: pointer; transition: 0.15s; color: #1e293b; font-size: 0.85rem; }
+        body.dark .calc-vehicle-row .star-selector button { color: #e2e8f0; border-color: #475569; }
+        .calc-vehicle-row .star-selector button.active { background: #fbbf24; border-color: #fbbf24; color: #1e293b; }
+        .calc-vehicle-row .view-card-btn { background: #3b82f6; color: white; border: none; padding: 2px 14px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; font-weight: 600; margin-left: auto; }
+        .calc-vehicle-row .view-card-btn:hover { background: #2563eb; }
+        .calc-vehicle-row .key-toggle { display: flex; gap: 4px; align-items: center; }
+        .calc-vehicle-row .key-toggle button { padding: 2px 10px; border-radius: 20px; border: 1px solid #cbd5e1; background: transparent; cursor: pointer; font-weight: 600; font-size: 0.7rem; transition: 0.15s; }
+        .calc-vehicle-row .key-toggle button.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        body.dark .calc-vehicle-row .key-toggle button { border-color: #475569; color: #e2e8f0; }
+        body.dark .calc-vehicle-row .key-toggle button.active { background: #3b82f6; color: white; }
+
+        .calc-stage-row { padding: 10px 0; border-bottom: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 4px; }
+        .calc-stage-row .stage-row-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+        .calc-stage-row .stage-row-header .stage-icon { font-size: 1.1rem; }
+        .calc-stage-row .stage-row-header .stage-desc { font-weight: 600; }
+        .calc-stage-row .stage-progress-wrap { display: flex; align-items: center; gap: 8px 16px; margin-top: 2px; }
+        .calc-stage-row .stage-progress-wrap .track { flex: 1; height: 6px; background: #e2e8f0; border-radius: 6px; overflow: hidden; min-width: 100px; }
+        .calc-stage-row .stage-progress-wrap .fill { height: 100%; background: #22c55e; border-radius: 6px; transition: width 0.2s; }
+        .calc-stage-row .stage-progress-wrap .label { font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+
+        .calc-reward-row { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+        .calc-reward-row .reward-item { font-size: 0.9rem; }
+        .calc-reward-row .reward-item .num { font-weight: 700; }
+        .calc-reward-row .reward-item .num.done { color: #22c55e; }
+        .calc-reward-row .reward-item .num.total { color: #3b82f6; }
+        .calc-controls { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 16px; }
+        .calc-controls button { padding: 6px 20px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer; transition: 0.2s; }
+        .calc-controls .btn-fill { background: #22c55e; color: white; }
+        .calc-controls .btn-fill:hover { background: #16a34a; }
+        .calc-controls .btn-clear { background: #ef4444; color: white; }
+        .calc-controls .btn-clear:hover { background: #dc2626; }
+
+        .calc-milestone-simple { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+        .calc-milestone-simple .ms-item { padding: 4px 12px; border: 1px solid #cbd5e1; border-radius: 16px; font-size: 0.8rem; background: rgba(255,255,255,0.05); }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .app-container { padding: 10px 12px 90px; }
+            .toolbar { padding: 12px 16px; gap: 10px; }
+            .sort-section { padding: 4px 10px; }
+            .search-input { width: 120px; }
+            .stats-panel { padding: 12px 16px; gap: 10px 16px; }
+            .stats-item { font-size: 0.7rem; padding: 3px 10px 3px 8px; }
+            .stats-number { font-size: 0.95rem; }
+            .car-card { padding: 14px 14px 18px; }
+            .two-columns { flex-direction: column; }
+            .detail-modal-content { padding: 0; }
+            .level-nav { padding: 4px 10px; gap: 4px; }
+            .level-nav button { width: 34px; height: 34px; font-size: 0.85rem; }
+            .float-group { bottom: 90px; right: 16px; gap: 8px; }
+            .float-btn { width: 48px; height: 48px; font-size: 20px; }
+            .home-card { padding: 30px 30px; min-width: 160px; }
+            .home-card .home-icon { font-size: 2.8rem; }
+            .home-title { font-size: 1.8rem; }
+            .editor-row { flex-direction: column; align-items: stretch; }
+            .editor-tool-row, .editor-milestone-row, .editor-club-row { flex-direction: column; align-items: stretch; }
+            .calc-vehicle-row { flex-direction: column; align-items: stretch; }
+            .calc-vehicle-row .star-selector { justify-content: center; }
+            .calc-vehicle-row .view-card-btn { margin-left: 0; }
+            .stage-task-container { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- ===== 主页 ===== -->
+    <div id="homePage">
+        <div class="home-title">🏎️ 狂野飙车9 · 小助手</div>
+        <div class="home-cards">
+            <div class="home-card" data-target="cars">
+                <span class="home-icon">🚗</span>
+                <div class="home-label">车辆档案馆</div>
+                <div class="home-desc">浏览全车数据，对比性能</div>
+            </div>
+            <div class="home-card" data-target="master">
+                <span class="home-icon">🏁</span>
+                <div class="home-label">大师计算器</div>
+                <div class="home-desc">追踪大师任务进度</div>
+            </div>
+            <div class="home-card" data-target="special">
+                <span class="home-icon">🏆</span>
+                <div class="home-label">特殊赛事</div>
+                <div class="home-desc">自定义赛事计算器</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 功能容器 ===== -->
+    <div id="functionContainer" class="function-container">
+
+        <!-- ===== 车辆档案馆 ===== -->
+        <div id="carsFunction" class="function-section">
+            <div class="toolbar" id="carsToolbar">
+                <button class="back-home-btn" id="backHomeFromCars">🏠 主页</button>
+                <div class="sort-section">
+                    <span>📊</span>
+                    <select id="sortField">
+                        <option value="perf">性能分</option>
+                        <option value="speed">极速</option>
+                        <option value="accel">加速</option>
+                        <option value="handling">操控</option>
+                        <option value="nitro">氮气</option>
+                    </select>
+                    <select id="sortOrder">
+                        <option value="desc">↓</option>
+                        <option value="asc">↑</option>
+                    </select>
+                </div>
+                <div class="sort-section">
+                    <span>📌</span>
+                    <div class="mode-toggle" id="modeToggle">
+                        <div class="mode-btn active" data-mode="global">全局</div>
+                        <div class="mode-btn" data-mode="level">等级</div>
+                    </div>
+                </div>
+                <div class="sort-section">
+                    <span>🏷️</span>
+                    <select id="brandFilter" class="brand-select"><option value="all">全部品牌</option></select>
+                </div>
+                <div class="sort-section">
+                    <span>🏆</span>
+                    <select id="leagueFilter" class="league-select"><option value="all">全部联赛</option></select>
+                </div>
+                <div class="sort-section">
+                    <span>🔍</span>
+                    <input type="text" id="searchInput" class="search-input" placeholder="车名或昵称" />
+                </div>
+                <div class="toolbar-actions">
+                    <button class="help-btn" id="helpBtn">📖 说明</button>
+                </div>
+            </div>
+
+            <div class="stats-panel" id="statsPanel">
+                <div class="stats-group">
+                    <div class="stats-item"><span class="stats-number" id="totalCount">0</span><span class="stats-label">总车辆</span></div>
+                    <span class="stats-divider">|</span>
+                    <div class="stats-item"><span class="stats-level-badge R">R</span><span class="stats-number" id="countR">0</span></div>
+                    <div class="stats-item"><span class="stats-level-badge S">S</span><span class="stats-number" id="countS">0</span></div>
+                    <div class="stats-item"><span class="stats-level-badge A">A</span><span class="stats-number" id="countA">0</span></div>
+                    <div class="stats-item"><span class="stats-level-badge B">B</span><span class="stats-number" id="countB">0</span></div>
+                    <div class="stats-item"><span class="stats-level-badge C">C</span><span class="stats-number" id="countC">0</span></div>
+                    <div class="stats-item"><span class="stats-level-badge D">D</span><span class="stats-number" id="countD">0</span></div>
+                </div>
+            </div>
+
+            <div id="carsGrid" class="cars-grid"></div>
+        </div>
+
+        <!-- ===== 大师计算器 ===== -->
+        <div id="masterFunction" class="function-section">
+            <div class="toolbar" id="masterToolbar">
+                <button class="back-home-btn" id="backHomeFromMaster">🏠 主页</button>
+                <div style="flex:1; text-align:center; font-weight:600; color:#ef4444;">🏁 大师计算器</div>
+                <div class="toolbar-actions">
+                    <button class="help-btn" id="helpBtnMaster">📖 说明</button>
+                </div>
+            </div>
+
+            <div class="master-progress-bar" id="masterProgressBar">
+                <span class="title">🏁 总进度</span>
+                <span class="progress-text" id="masterProgressText">进度 0 / 967</span>
+                <div class="progress-track"><div class="progress-fill" id="masterProgressFill" style="width:0%;"></div></div>
+                <span class="progress-percent" id="masterProgressPercent">0.0%</span>
+            </div>
+
+            <div class="master-controls">
+                <button class="btn-fill" id="fillAllBtn">⬆️ 拉满车库</button>
+                <button class="btn-clear" id="clearAllBtn">🗑️ 清空车库</button>
+            </div>
+
+            <div id="masterCards"></div>
+        </div>
+
+        <!-- ===== 特殊赛事 ===== -->
+        <div id="specialFunction" class="function-section">
+            <div class="toolbar" id="specialToolbar">
+                <button class="back-home-btn" id="backHomeFromSpecial">🏠 主页</button>
+                <div style="flex:1; text-align:center; font-weight:600; color:#8b5cf6;">🏆 特殊赛事</div>
+                <div class="toolbar-actions">
+                    <button class="help-btn" id="helpBtnSpecial">📖 说明</button>
+                    <button class="help-btn" id="clearEventDataBtn" style="background:#ef4444;">🗑️ 清空数据</button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+                <button class="editor-btn" id="toggleEditorMode" style="background:#8b5cf6;">✏️ 编辑器</button>
+                <button class="editor-btn" id="toggleCalculatorMode" style="background:#22c55e;">📊 计算器</button>
+            </div>
+
+            <!-- ===== 编辑器 ===== -->
+            <div id="specialEditor" class="editor-section">
+                <h3>✏️ 特殊赛事编辑器</h3>
+                <div class="editor-row">
+                    <label>主题车：</label>
+                    <input type="text" id="eventThemeCar" class="editor-input" placeholder="输入主题车名称" style="flex:1; min-width:150px;" />
+                    <label>标题：</label>
+                    <input type="text" id="eventTitle" class="editor-input" placeholder="赛事标题" style="flex:1; min-width:150px;" />
+                </div>
+
+                <!-- 工具车 -->
+                <div style="margin-top:16px;">
+                    <h4>工具车</h4>
+                    <div class="editor-row">
+                        <input type="text" id="toolSearchInput" class="editor-input" placeholder="搜索车名或外号..." style="flex:1; min-width:180px;" />
+                        <button class="editor-btn" id="addToolBtn">+ 添加</button>
+                    </div>
+                    <div id="toolSearchResults" class="editor-search-results"></div>
+                    <div id="toolList" class="editor-tool-list"></div>
+                </div>
+
+                <!-- 阶段 -->
+                <div style="margin-top:24px;">
+                    <h4>阶段</h4>
+                    <button class="editor-btn" id="addStageBtn">+ 添加阶段</button>
+                    <div id="stageList" class="editor-stage-list" style="margin-top:8px;"></div>
+                </div>
+
+                <!-- 里程碑 -->
+                <div style="margin-top:24px;">
+                    <h4>里程碑</h4>
+                    <button class="editor-btn" id="addMilestoneBtn">+ 添加里程碑</button>
+                    <div id="milestoneList" class="editor-milestone-list" style="margin-top:8px;"></div>
+                </div>
+
+                <!-- 俱乐部奖励 -->
+                <div style="margin-top:24px;">
+                    <h4>俱乐部奖励（默认直接领取）</h4>
+                    <button class="editor-btn" id="addClubBtn">+ 添加俱乐部奖励</button>
+                    <div id="clubList" class="editor-club-list" style="margin-top:8px;"></div>
+                </div>
+
+                <!-- 商店包 -->
+                <div style="margin-top:24px;">
+                    <h4>商店包解锁条件</h4>
+                    <div class="editor-row" style="flex-wrap:wrap; gap:12px;">
+                        <label><input type="checkbox" id="packBluePrintBlue" /> 蓝币图纸包</label>
+                        <input type="number" id="packBluePrintBlueCond" placeholder="条件数" class="editor-input" style="width:80px;" />
+                        <label><input type="checkbox" id="packBluePrintGold" /> 点券图纸包</label>
+                        <input type="number" id="packBluePrintGoldCond" placeholder="条件数" class="editor-input" style="width:80px;" />
+                        <label><input type="checkbox" id="packKeyBlue" /> 蓝币钥匙包</label>
+                        <input type="number" id="packKeyBlueCond" placeholder="条件数" class="editor-input" style="width:80px;" />
+                        <label><input type="checkbox" id="packKeyGold" /> 点券钥匙包</label>
+                        <input type="number" id="packKeyGoldCond" placeholder="条件数" class="editor-input" style="width:80px;" />
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap;">
+                    <button class="editor-btn editor-btn-success" id="saveEventData">💾 保存赛事数据</button>
+                    <button class="editor-btn" id="previewCalculator" style="background:#8b5cf6;">👁️ 预览计算器</button>
+                    <button class="editor-btn" id="syncToRemoteBtn" style="background:#f59e0b;">☁️ 发布到云端</button>
+                </div>
+            </div>
+
+            <!-- ===== 计算器 ===== -->
+            <div id="specialCalculator" class="calculator-section" style="display:none;">
+                <h3>📊 特殊赛事计算器</h3>
+                <div id="calcTitle" style="font-size:1.2rem; font-weight:700; margin-bottom:8px;"></div>
+                <div id="calcUpdateTime" style="font-size:0.8rem; color:#94a3b8; margin-bottom:12px;"></div>
+                <div class="calc-controls">
+                    <button class="btn-fill" id="calcFillAll">⬆️ 拉满车库</button>
+                    <button class="btn-clear" id="calcClearAll">🗑️ 清空车库</button>
+                </div>
+                <div id="calcVehicles"></div>
+                <div id="calcStages" style="margin-top:16px;"></div>
+                <div id="calcRewards" style="margin-top:16px;"></div>
+            </div>
+        </div>
+
+    </div><!-- /functionContainer -->
+
+    <!-- ===== 等级导航 ===== -->
+    <div class="level-nav" id="levelNav">
+        <button data-level="D">D</button>
+        <button data-level="C">C</button>
+        <button data-level="B">B</button>
+        <button data-level="A">A</button>
+        <button data-level="S">S</button>
+        <button data-level="R">R</button>
+    </div>
+
+    <!-- ===== 浮动按钮组 ===== -->
+    <div class="float-group" id="floatGroup">
+        <button class="float-btn" id="floatCompareBtn" title="对比模式">🔍</button>
+        <button class="float-btn theme-btn" id="themeBtn" title="切换主题">🌓</button>
+        <button class="float-btn back-to-top" id="backToTopBtn" title="回到顶部">↑</button>
+    </div>
+    <button class="exit-compare-btn" id="exitCompareBtn" style="display:none;">← 返回</button>
+
+    <script>
+        // ================================================================
+        //  完整逻辑 + 远程同步（已配置你给的 Raw 地址）
+        // ================================================================
+
+        // 🔴 你提供的真实地址
+        const REMOTE_EVENT_URL = 'https://raw.githubusercontent.com/LeoProMax0336/A9-Assistant/refs/heads/main/event.json';
+
+        // ========== 全局变量（与之前相同） ==========
+        const colorMap = { "红色": "#ef4444", "金色": "#fbbf24", "天蓝": "#06b6d4", "紫色": "#a855f7", "浅蓝": "#38bdf8" };
+        const leagueColorMap = {
+            "传奇": "#F4DD68", "宗师": "#ef4444", "精英": "#FF0066", "钻石": "#66FFFF",
+            "黄金": "#FF9900", "翡翠": "#66FF99", "白金": "#FF33CC", "白银": "#00CCFF", "青铜": "#FA6B00"
+        };
+        const levelPriority = { "R": 7, "S": 6, "A": 5, "B": 4, "C": 3, "D": 2 };
+        let vehiclesData = [];
+        let specialEventData = null;
+        let selectedTools = [];
+        let stages = [];
+        let milestones = [];
+        let clubRewards = [];
+        let calcVehicleStates = {};
+        const STORAGE_KEY = 'specialEventData_v4';
+        let currentSortField = "perf", currentSortOrder = "desc", currentBrand = "all", currentLeague = "all", currentSearch = "";
+        let sortMode = "global";
+        let compareMode = false, selectedForCompare = [];
+        let currentAppMode = 'cars';
+        let globalMax = { topSpeed: 0, accel: 0, handling: 0, nitro: 0 };
+
+        // ========== DOM 引用 ==========
+        const homePage = document.getElementById('homePage');
+        const functionContainer = document.getElementById('functionContainer');
+        const carsFunction = document.getElementById('carsFunction');
+        const masterFunction = document.getElementById('masterFunction');
+        const specialFunction = document.getElementById('specialFunction');
+        const carsToolbar = document.getElementById('carsToolbar');
+        const masterToolbar = document.getElementById('masterToolbar');
+        const specialToolbar = document.getElementById('specialToolbar');
+        let gridContainer, brandSelect, leagueSelect, sortFieldSelect, sortOrderSelect, searchInput, modeToggle;
+        let compareBtn, themeBtn, backToTopBtn, exitCompareBtn, helpBtn, helpBtnMaster, helpBtnSpecial;
+
+        // ========== 工具函数 ==========
+        function parseTags(tagStr) {
+            if (!tagStr || tagStr.trim() === "") return [];
+            return tagStr.split('/').map(t => t.trim()).filter(t => t);
+        }
+        function extractFeelTags(tags) {
+            const feelSet = new Set(["船车", "轮椅", "稳定", "跳跃", "虚高"]);
+            return tags.filter(t => feelSet.has(t));
+        }
+        function formatNitrospeedAdvanced(raw) {
+            if (raw === null || raw === undefined || raw === "") return "<span>?</span>";
+            const str = String(raw).trim();
+            if (!str.includes('/')) {
+                if (str === "未知") return `<span class="nitro-part">未知</span>`;
+                return `<span class="nitro-part">${str}</span>`;
+            }
+            let parts = str.split('/').map(s => s.trim());
+            while (parts.length < 4) parts.push("未知");
+            const colors = ["#eab308", "#ef4444", "#38bdf8", "#a855f7"];
+            const numeric = parts.map(p => p === "未知" ? null : parseFloat(p));
+            if (numeric.every(v => v === null)) return `<span class="nitro-part">未知</span>`;
+            const validNums = numeric.filter(v => v !== null);
+            const minVal = Math.min(...validNums);
+            let output = [];
+            let minOutput = false;
+            for (let i = 0; i < parts.length; i++) {
+                const val = numeric[i];
+                if (val === null) { output.push(`<span class="nitro-part">未知</span>`); continue; }
+                if (val === minVal && !minOutput) { output.push(`<span class="nitro-part">${val}</span>`); minOutput = true; } else if (val > minVal) { output.push(`<span class="nitro-part" style="color: ${colors[i]};">+${val}</span>`); }
+            }
+            return output.join(' / ');
+        }
+
+        function computeRankAndPercent(arr, getValue) {
+            if (arr.length === 0) return new Map();
+            const items = arr.map(car => ({ car, val: getValue(car) }));
+            items.sort((a, b) => {
+                const va = (a.val === null || isNaN(a.val)) ? -Infinity : a.val;
+                const vb = (b.val === null || isNaN(b.val)) ? -Infinity : b.val;
+                return vb - va;
+            });
+            const total = items.length;
+            const result = new Map();
+            for (let i = 0; i < total; i++) {
+                const val = items[i].val;
+                if (val === null || isNaN(val)) { result.set(items[i].car, { rank: total, percent: 0 }); continue; }
+                let firstEqual = i;
+                while (firstEqual > 0 && items[firstEqual - 1].val === val) firstEqual--;
+                const rank = firstEqual + 1;
+                let percent = total > 1 ? Math.round(((rank - 1) / (total - 1)) * 100) : 100;
+                percent = percent === 0 ? 1 : percent;
+                result.set(items[i].car, { rank, percent });
+                while (i + 1 < total && items[i + 1].val === val) i++;
+            }
+            return result;
+        }
+
+        function addRanksToVehicles(vehicles) {
+            const validVehicles = vehicles.filter(car => car && typeof car === 'object');
+            if (validVehicles.length === 0) return;
+            const leagues = {};
+            for (let car of validVehicles) {
+                const league = car.league;
+                if (!leagues[league]) leagues[league] = [];
+                leagues[league].push(car);
+            }
+            const metrics = ['perfScore', 'topSpeed', 'accel', 'handling', 'nitro'];
+            for (let car of validVehicles) { car.rankGlobal = {}; car.rankLeague = {}; car.totalGlobal = {}; car.totalLeague = {}; }
+            for (let metric of metrics) {
+                const getter = car => car[metric];
+                const rankMap = computeRankAndPercent(validVehicles, getter);
+                for (let car of validVehicles) {
+                    const info = rankMap.get(car);
+                    if (info) { car.rankGlobal[metric] = info.rank; car.totalGlobal[metric] = validVehicles.length; } else { car.rankGlobal[metric] = validVehicles.length; car.totalGlobal[metric] = validVehicles.length; }
+                }
+            }
+            for (let league in leagues) {
+                const leagueCars = leagues[league];
+                for (let metric of metrics) {
+                    const getter = car => car[metric];
+                    const rankMap = computeRankAndPercent(leagueCars, getter);
+                    for (let car of leagueCars) {
+                        const info = rankMap.get(car);
+                        if (info) { car.rankLeague[metric] = info.rank; car.totalLeague[metric] = leagueCars.length; } else { car.rankLeague[metric] = leagueCars.length; car.totalLeague[metric] = leagueCars.length; }
+                    }
+                }
+            }
+        }
+
+        function processAllVehicles() {
+            const rawValid = vehiclesDataRaw.filter(v => v && typeof v === 'object');
+            const processed = rawValid.map(v => {
+                if (!v.leagueColor) v.leagueColor = leagueColorMap[v.league] || "#F4DD68";
+                const tagArray = parseTags(v.tags);
+                const feelTagsArray = extractFeelTags(tagArray);
+                const toNum = (val) => (val === "未知" || val === null || val === undefined) ? null : parseFloat(val);
+                return {
+                    ...v,
+                    topSpeed: toNum(v.topSpeed),
+                    accel: toNum(v.accel),
+                    handling: toNum(v.handling),
+                    nitro: toNum(v.nitro),
+                    airSpeed: v.airSpeed === "未知" ? "未知" : toNum(v.airSpeed),
+                    tags: tagArray,
+                    feelTags: feelTagsArray,
+                    remark: v.remark || ""
+                };
+            });
+            globalMax.topSpeed = Math.max(...processed.map(v => v.topSpeed).filter(v => v !== null && !isNaN(v)));
+            globalMax.accel = Math.max(...processed.map(v => v.accel).filter(v => v !== null && !isNaN(v)));
+            globalMax.handling = Math.max(...processed.map(v => v.handling).filter(v => v !== null && !isNaN(v)));
+            globalMax.nitro = Math.max(...processed.map(v => v.nitro).filter(v => v !== null && !isNaN(v)));
+            addRanksToVehicles(processed);
+            return processed;
+        }
+
+        function findVehicleInfo(carName) {
+            let info = vehiclesData.find(v => v.name === carName);
+            if (info) return { level: info.level, needKey: info.needKey, blueprintColor: info.blueprintColor, maxStars: info.maxStars, perfScore: info.perfScore };
+            const normalized = (s) => s.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            const target = normalized(carName);
+            for (let v of vehiclesData) {
+                if (normalized(v.name) === target) {
+                    return { level: v.level, needKey: v.needKey, blueprintColor: v.blueprintColor, maxStars: v.maxStars, perfScore: v.perfScore };
+                }
+            }
+            return { level: '?', needKey: false, blueprintColor: '金色', maxStars: 0, perfScore: 0 };
+        }
+
+        // ========== 车辆档案馆 ==========
+        function populateFilters() {
+            const brands = [...new Set(vehiclesData.map(c => c.brand))];
+            brandSelect.innerHTML = '<option value="all">全部品牌</option>';
+            brands.forEach(b => { const opt = document.createElement("option"); opt.value = b; opt.textContent = b; brandSelect.appendChild(opt); });
+            const leagues = [...new Set(vehiclesData.map(c => c.league))];
+            leagueSelect.innerHTML = '<option value="all">全部联赛</option>';
+            leagues.forEach(l => { const opt = document.createElement("option"); opt.value = l; opt.textContent = l; leagueSelect.appendChild(opt); });
+        }
+
+        function getFieldValue(car, field) {
+            switch (field) {
+                case "perf": return car.perfScore;
+                case "speed": return (typeof car.topSpeed === 'number' && !isNaN(car.topSpeed)) ? car.topSpeed : 0;
+                case "accel": return (typeof car.accel === 'number' && !isNaN(car.accel)) ? car.accel : 0;
+                case "handling": return (typeof car.handling === 'number' && !isNaN(car.handling)) ? car.handling : 0;
+                case "nitro": return (typeof car.nitro === 'number' && !isNaN(car.nitro)) ? car.nitro : 0;
+                default: return 0;
+            }
+        }
+
+        function getFilteredSortedCars() {
+            let filtered = [...vehiclesData];
+            if (currentBrand !== "all") filtered = filtered.filter(c => c.brand === currentBrand);
+            if (currentLeague !== "all") filtered = filtered.filter(c => c.league === currentLeague);
+            if (currentSearch.trim() !== "") {
+                const term = currentSearch.trim().toLowerCase();
+                filtered = filtered.filter(c => c.name.toLowerCase().includes(term) || (c.nickname && c.nickname.toLowerCase().includes(term)));
+            }
+            const order = currentSortOrder === "asc" ? 1 : -1;
+            if (sortMode === "global") {
+                filtered.sort((a, b) => {
+                    let va = getFieldValue(a, currentSortField);
+                    let vb = getFieldValue(b, currentSortField);
+                    if (va < vb) return -1 * order;
+                    if (va > vb) return 1 * order;
+                    return 0;
+                });
+            } else {
+                filtered.sort((a, b) => {
+                    const levelDiff = (levelPriority[b.level] || 0) - (levelPriority[a.level] || 0);
+                    if (levelDiff !== 0) return levelDiff;
+                    let va = getFieldValue(a, currentSortField);
+                    let vb = getFieldValue(b, currentSortField);
+                    if (va < vb) return -1 * order;
+                    if (va > vb) return 1 * order;
+                    return 0;
+                });
+            }
+            return filtered;
+        }
+
+        function updateStats() {
+            const total = vehiclesData.length;
+            document.getElementById('totalCount').textContent = total;
+            const levels = { R: 0, S: 0, A: 0, B: 0, C: 0, D: 0 };
+            for (let c of vehiclesData) { if (levels[c.level] !== undefined) levels[c.level]++; }
+            document.getElementById('countR').textContent = levels.R;
+            document.getElementById('countS').textContent = levels.S;
+            document.getElementById('countA').textContent = levels.A;
+            document.getElementById('countB').textContent = levels.B;
+            document.getElementById('countC').textContent = levels.C;
+            document.getElementById('countD').textContent = levels.D;
+        }
+
+        function renderBlueprintSeq(car) {
+            if (!car.blueprintSeq) return '';
+            const numbers = car.blueprintSeq.split('/').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            const total = numbers.reduce((a, b) => a + b, 0);
+            const bgColor = colorMap[car.blueprintColor] || "#fbbf24";
+            let html = '';
+            if (car.needKey) html += `<div class="bp-block key-block" style="background-color:${bgColor};color:white;">🔑</div>`;
+            for (let num of numbers) html += `<div class="bp-block" style="flex:${num} 1 0%;background-color:${bgColor};color:white;">${num}</div>`;
+            html += `<div class="total-block" style="border-color:${bgColor};color:${bgColor};">总计 ${total}</div>`;
+            return `<div class="blueprint-row">${html}</div>`;
+        }
+
+        function getStarDisplay(stars) { return '⭐'.repeat(stars) + ` ${stars}星`; }
+        function formatValue(val) { return (val === null || val === undefined || val === "未知") ? "未知" : val; }
+
+        function renderTags(tags) {
+            if (!tags || tags.length === 0) return '';
+            const tagMap = { "滑流": "tag-slstream", "经典": "tag-classic", "对决": "tag-duel" };
+            return tags.map(t => `<span class="tag ${tagMap[t] || ''}">${t}</span>`).join('');
+        }
+
+        function renderFeelTags(feelTags) {
+            if (!feelTags || feelTags.length === 0) return '';
+            const classMap = { "船车": "feel-ship", "虚高": "feel-overrated", "轮椅": "feel-wheelchair", "跳跃": "feel-bounce", "稳定": "feel-stable" };
+            return `<div class="feel-row">${feelTags.map(t => `<span class="feel-tag ${classMap[t] || ''}">${t}</span>`).join('')}</div>`;
+        }
+
+        function createCardHTML(car, isCompareMode = false, isSelected = false) {
+            const speedPercent = (car.topSpeed !== null && globalMax.topSpeed > 0) ? (car.topSpeed / globalMax.topSpeed) * 100 : 0;
+            const accelPercent = (car.accel !== null && globalMax.accel > 0) ? (car.accel / globalMax.accel) * 100 : 0;
+            const handlingPercent = (car.handling !== null && globalMax.handling > 0) ? (car.handling / globalMax.handling) * 100 : 0;
+            const nitroPercent = (car.nitro !== null && globalMax.nitro > 0) ? (car.nitro / globalMax.nitro) * 100 : 0;
+            let partsHtml = '';
+            if (car.partsBlue > 0) partsHtml += `<div class="hexagon hex-blue">${car.partsBlue}</div>`;
+            if (car.partsPurple > 0) partsHtml += `<div class="hexagon hex-purple">${car.partsPurple}</div>`;
+            if (car.partsGold > 0) partsHtml += `<div class="hexagon hex-gold">${car.partsGold}</div>`;
+            const nitroAirHtml = formatNitrospeedAdvanced(car.nitroAirSpeedRaw);
+            const checkboxHtml = isCompareMode ? `<div class="checkbox-container ${isSelected ? 'selected' : ''}" data-id="${car.name}"></div>` : '';
+            const tagsHtml = renderTags(car.tags);
+            const feelHtml = renderFeelTags(car.feelTags);
+            const remarkHtml = car.remark ? `<div class="remark">${car.remark}</div>` : '';
+            const perfRankGlobal = car.rankGlobal?.perfScore || 0;
+            const perfTotalGlobal = car.totalGlobal?.perfScore || 0;
+            const perfRankLeague = car.rankLeague?.perfScore || 0;
+            const perfTotalLeague = car.totalLeague?.perfScore || 0;
+            let perfPercentGlobal = perfTotalGlobal > 1 ? Math.round(((perfRankGlobal - 1) / (perfTotalGlobal - 1)) * 100) : 100;
+            let perfPercentLeague = perfTotalLeague > 1 ? Math.round(((perfRankLeague - 1) / (perfTotalLeague - 1)) * 100) : 100;
+            perfPercentGlobal = perfPercentGlobal === 0 ? 1 : perfPercentGlobal;
+            perfPercentLeague = perfPercentLeague === 0 ? 1 : perfPercentLeague;
+            const metrics = [
+                { label: '🚀 最大速度', value: car.topSpeed, key: 'topSpeed', leagueColor: car.leagueColor },
+                { label: '⚡ 加速', value: car.accel, key: 'accel', leagueColor: car.leagueColor },
+                { label: '🎮 操控', value: car.handling, key: 'handling', leagueColor: car.leagueColor },
+                { label: '💨 氮气', value: car.nitro, key: 'nitro', leagueColor: car.leagueColor }
+            ];
+            let statsHtml = '';
+            for (let m of metrics) {
+                const rankGlobal = car.rankGlobal?.[m.key] || 0;
+                const totalGlobal = car.totalGlobal?.[m.key] || 0;
+                const rankLeague = car.rankLeague?.[m.key] || 0;
+                const totalLeague = car.totalLeague?.[m.key] || 0;
+                let percentGlobal = totalGlobal > 1 ? Math.round(((rankGlobal - 1) / (totalGlobal - 1)) * 100) : 100;
+                let percentLeague = totalLeague > 1 ? Math.round(((rankLeague - 1) / (totalLeague - 1)) * 100) : 100;
+                percentGlobal = percentGlobal === 0 ? 1 : percentGlobal;
+                percentLeague = percentLeague === 0 ? 1 : percentLeague;
+                const leagueRankText = `<strong>${rankLeague}/${totalLeague}</strong> ${percentLeague}%`;
+                const globalRankText = `<strong>${rankGlobal}/${totalGlobal}</strong> ${percentGlobal}%`;
+                const barWidth = (m.value !== null && globalMax[m.key] > 0) ? (m.value / globalMax[m.key]) * 100 : 0;
+                statsHtml += `
+                        <div class="stat-item">
+                            <div class="stat-label">${m.label}</div>
+                            <div class="stat-value">
+                                <span>${formatValue(m.value)}</span>
+                                <span class="stat-percentages">
+                                    <span class="rank-and-percent" style="color:${m.leagueColor};">${leagueRankText}</span>
+                                    <span class="rank-and-percent" style="color:#3b82f6;">${globalRankText}</span>
+                                </span>
+                            </div>
+                            <div class="bar-bg"><div class="bar-fill" style="width:${barWidth}%;"></div></div>
+                        </div>
+                    `;
+            }
+            return `
+                    <div class="car-card" data-name="${car.name}" data-level="${car.level}">
+                        ${checkboxHtml}
+                        <div class="row-name">
+                            <span class="car-level">${car.level}</span>
+                            <div class="car-name">${car.name}</div>
+                            <div class="league-badge" style="background-color:${car.leagueColor};">${car.league}</div>
+                            ${tagsHtml}
+                        </div>
+                        <div class="row-stats">
+                            <div class="star-rating">${getStarDisplay(car.maxStars)}</div>
+                            <div class="nickname">${car.nickname || ""}</div>
+                            <div class="perf-score">
+                                🏁 ${car.perfScore}
+                                <span class="rank-league" style="color:${car.leagueColor};"> <strong>${perfRankLeague}/${perfTotalLeague}</strong> ${perfPercentLeague}%</span>
+                                <span class="rank-global" style="color:#3b82f6;"> <strong>${perfRankGlobal}/${perfTotalGlobal}</strong> ${perfPercentGlobal}%</span>
+                            </div>
+                        </div>
+                        ${renderBlueprintSeq(car)}
+                        <div class="two-columns">
+                            <div class="left-stats">${statsHtml}</div>
+                            <div class="right-extra">
+                                <div class="airspeed-box">
+                                    <div class="airspeed-item"><div class="airspeed-label">氮速</div><div class="airspeed-value">${nitroAirHtml}</div></div>
+                                    <div class="airspeed-item"><div class="airspeed-label">空速</div><div class="airspeed-value">${formatValue(car.airSpeed)}</div></div>
+                                </div>
+                                <div><div class="stat-label" style="text-align:center;">进口零件</div><div class="parts-row">${partsHtml || '<span style="font-size:0.7rem;color:#aaa;">暂无</span>'}</div></div>
+                                ${feelHtml}
+                                ${remarkHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+        }
+
+        function showDetailModal(car) {
+            const overlay = document.createElement('div');
+            overlay.className = 'detail-overlay';
+            const cardHtml = createCardHTML(car, false, false);
+            overlay.innerHTML = `
+                    <div class="detail-modal-content">
+                        <button class="detail-close">✕</button>
+                        ${cardHtml}
+                    </div>
+                `;
+            document.body.appendChild(overlay);
+            overlay.querySelector('.detail-close').addEventListener('click', () => overlay.remove());
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        }
+
+        function renderCars() {
+            const cars = getFilteredSortedCars();
+            if (cars.length === 0) { gridContainer.innerHTML = '<div class="no-data">🚗 没有找到符合筛选条件的车辆～ 试试重置筛选吧</div>'; return; }
+            let cardsHtml = '';
+            for (let car of cars) {
+                const isSelected = compareMode && selectedForCompare.some(c => c.name === car.name);
+                cardsHtml += createCardHTML(car, compareMode, isSelected);
+            }
+            gridContainer.innerHTML = cardsHtml;
+            bindLevelNav();
+            updateStats();
+            if (compareMode) {
+                document.querySelectorAll('.checkbox-container').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const name = el.getAttribute('data-id');
+                        const car = vehiclesData.find(c => c.name === name);
+                        if (!car) return;
+                        const idx = selectedForCompare.findIndex(c => c.name === name);
+                        if (idx !== -1) selectedForCompare.splice(idx, 1);
+                        else { if (selectedForCompare.length >= 2) { alert("最多只能选两辆车对比"); return; } selectedForCompare.push(car); }
+                        renderCars();
+                        if (selectedForCompare.length === 2) showCompareModal(selectedForCompare[0], selectedForCompare[1]);
+                    });
+                });
+            }
+            document.querySelectorAll('.car-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.checkbox-container')) return;
+                    const name = card.getAttribute('data-name');
+                    const car = vehiclesData.find(c => c.name === name);
+                    if (car) showDetailModal(car);
+                });
+            });
+        }
+
+        function getFinalNitroAirSpeed(car) {
+            let raw = car.nitroAirSpeedRaw;
+            if (raw === null || raw === undefined) return null;
+            let str = String(raw);
+            if (str.includes('/')) {
+                const parts = str.split('/').map(s => s.trim());
+                const nums = parts.map(p => p === "未知" ? null : parseFloat(p)).filter(v => v !== null);
+                if (nums.length === 0) return null;
+                return Math.max(...nums);
+            }
+            let num = parseFloat(str);
+            return isNaN(num) ? null : num;
+        }
+
+        function formatDiff(value, decimalPlaces) {
+            if (value === null || isNaN(value)) return { text: "-", className: "diff-unknown" };
+            if (value === 0) return { text: "=", className: "diff-zero" };
+            let formatted = value.toFixed(decimalPlaces);
+            if (value > 0) formatted = "+" + formatted;
+            return { text: formatted, className: value > 0 ? "diff-positive" : "diff-negative" };
+        }
+
+        function showCompareModal(carA, carB) {
+            const getValSafe = (car, attr) => {
+                const val = car[attr];
+                if (val === "未知" || val === null || val === undefined) return "未知";
+                const num = parseFloat(val);
+                return isNaN(num) ? "未知" : num;
+            };
+            const speedA = getValSafe(carA, 'topSpeed'), speedB = getValSafe(carB, 'topSpeed');
+            const accA = getValSafe(carA, 'accel'), accB = getValSafe(carB, 'accel');
+            const handA = getValSafe(carA, 'handling'), handB = getValSafe(carB, 'handling');
+            const nitroA = getValSafe(carA, 'nitro'), nitroB = getValSafe(carB, 'nitro');
+            const nitroAirA = getFinalNitroAirSpeed(carA);
+            const nitroAirB = getFinalNitroAirSpeed(carB);
+            const airA = getValSafe(carA, 'airSpeed'), airB = getValSafe(carB, 'airSpeed');
+            const isUnknown = (v) => v === "未知";
+            const speedDiff = (!isUnknown(speedA) && !isUnknown(speedB)) ? speedB - speedA : null;
+            const accDiff = (!isUnknown(accA) && !isUnknown(accB)) ? accB - accA : null;
+            const handDiff = (!isUnknown(handA) && !isUnknown(handB)) ? handB - handA : null;
+            const nitroDiff = (!isUnknown(nitroA) && !isUnknown(nitroB)) ? nitroB - nitroA : null;
+            const nitroAirDiff = (nitroAirA !== null && nitroAirB !== null) ? nitroAirB - nitroAirA : null;
+            const airDiff = (!isUnknown(airA) && !isUnknown(airB)) ? airB - airA : null;
+            const speedPercentA = !isUnknown(speedA) ? (speedA / globalMax.topSpeed) * 100 : 0;
+            const speedPercentB = !isUnknown(speedB) ? (speedB / globalMax.topSpeed) * 100 : 0;
+            const accPercentA = !isUnknown(accA) ? (accA / globalMax.accel) * 100 : 0;
+            const accPercentB = !isUnknown(accB) ? (accB / globalMax.accel) * 100 : 0;
+            const handPercentA = !isUnknown(handA) ? (handA / globalMax.handling) * 100 : 0;
+            const handPercentB = !isUnknown(handB) ? (handB / globalMax.handling) * 100 : 0;
+            const nitroPercentA = !isUnknown(nitroA) ? (nitroA / globalMax.nitro) * 100 : 0;
+            const nitroPercentB = !isUnknown(nitroB) ? (nitroB / globalMax.nitro) * 100 : 0;
+            const diffSpeedObj = formatDiff(speedDiff, 1);
+            const diffAccObj = formatDiff(accDiff, 2);
+            const diffHandObj = formatDiff(handDiff, 2);
+            const diffNitroObj = formatDiff(nitroDiff, 2);
+            const diffNitroAirObj = formatDiff(nitroAirDiff, 0);
+            const diffAirObj = formatDiff(airDiff, 0);
+            const modalHtml = `
+                    <div class="compare-modal" id="compareModal">
+                        <div class="compare-card">
+                            <button class="close-modal-btn" id="modalCloseBtn">✕</button>
+                            <h3 style="margin-bottom:20px;">📊 数据对比：${carA.name} vs ${carB.name}</h3>
+                            <div class="compare-row"><div class="compare-title">🚀 最大速度</div><div class="compare-stat"><div class="bar-compare"><div class="bar-pair"><div class="bar-label" style="color:#ef4444;">${carA.name} ${formatValue(speedA)}</div><div class="bar-red" style="width:${speedPercentA}%;"></div></div><div class="bar-pair"><div class="bar-label" style="color:#22c55e;">${carB.name} ${formatValue(speedB)}</div><div class="bar-green" style="width:${speedPercentB}%;"></div></div></div><div class="diff-value ${diffSpeedObj.className}">${diffSpeedObj.text}</div></div></div>
+                            <div class="compare-row"><div class="compare-title">⚡ 加速</div><div class="compare-stat"><div class="bar-compare"><div class="bar-pair"><div class="bar-label" style="color:#ef4444;">${carA.name} ${formatValue(accA)}</div><div class="bar-red" style="width:${accPercentA}%;"></div></div><div class="bar-pair"><div class="bar-label" style="color:#22c55e;">${carB.name} ${formatValue(accB)}</div><div class="bar-green" style="width:${accPercentB}%;"></div></div></div><div class="diff-value ${diffAccObj.className}">${diffAccObj.text}</div></div></div>
+                            <div class="compare-row"><div class="compare-title">🎮 操控</div><div class="compare-stat"><div class="bar-compare"><div class="bar-pair"><div class="bar-label" style="color:#ef4444;">${carA.name} ${formatValue(handA)}</div><div class="bar-red" style="width:${handPercentA}%;"></div></div><div class="bar-pair"><div class="bar-label" style="color:#22c55e;">${carB.name} ${formatValue(handB)}</div><div class="bar-green" style="width:${handPercentB}%;"></div></div></div><div class="diff-value ${diffHandObj.className}">${diffHandObj.text}</div></div></div>
+                            <div class="compare-row"><div class="compare-title">💨 氮气</div><div class="compare-stat"><div class="bar-compare"><div class="bar-pair"><div class="bar-label" style="color:#ef4444;">${carA.name} ${formatValue(nitroA)}</div><div class="bar-red" style="width:${nitroPercentA}%;"></div></div><div class="bar-pair"><div class="bar-label" style="color:#22c55e;">${carB.name} ${formatValue(nitroB)}</div><div class="bar-green" style="width:${nitroPercentB}%;"></div></div></div><div class="diff-value ${diffNitroObj.className}">${diffNitroObj.text}</div></div></div>
+                            <div class="compare-row"><div class="compare-title">💨 氮速 / 空速</div><div class="compare-stat" style="justify-content:space-between;"><div class="nitro-compare"><div class="nitro-item"><span style="color:#ef4444;">${carA.name} 氮速</span><span>${formatValue(nitroAirA)}</span></div><div class="nitro-item"><span style="color:#22c55e;">${carB.name} 氮速</span><span>${formatValue(nitroAirB)}</span></div><div class="nitro-item"><span style="color:#3b82f6;">差值</span><span class="${diffNitroAirObj.className}">${diffNitroAirObj.text}</span></div></div><div class="nitro-compare"><div class="nitro-item"><span style="color:#ef4444;">${carA.name} 空速</span><span>${formatValue(airA)}</span></div><div class="nitro-item"><span style="color:#22c55e;">${carB.name} 空速</span><span>${formatValue(airB)}</span></div><div class="nitro-item"><span style="color:#3b82f6;">差值</span><span class="${diffAirObj.className}">${diffAirObj.text}</span></div></div></div></div>
+                            <div class="close-compare"><button id="closeCompareBtn" style="background:#3b82f6;color:white;border:none;padding:8px 24px;border-radius:40px;cursor:pointer;">退出对比</button></div>
+                        </div>
+                    </div>
+                `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            document.getElementById('modalCloseBtn').addEventListener('click', () => { document.getElementById('compareModal').remove(); exitCompareMode(); });
+            document.getElementById('closeCompareBtn').addEventListener('click', () => { document.getElementById('compareModal').remove(); exitCompareMode(); });
+        }
+
+        function exitCompareMode() {
+            compareMode = false;
+            selectedForCompare = [];
+            renderCars();
+            compareBtn.classList.remove('active');
+            compareBtn.innerHTML = '🔍';
+            compareBtn.style.background = "#3b82f6";
+            exitCompareBtn.style.display = 'none';
+        }
+
+        function scrollToLevel(level) {
+            const cards = document.querySelectorAll('.car-card');
+            for (let card of cards) {
+                const levelSpan = card.querySelector('.car-level');
+                if (levelSpan && levelSpan.textContent.trim() === level) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    document.querySelectorAll('.level-nav button').forEach(btn => {
+                        if (btn.getAttribute('data-level') === level) btn.classList.add('active');
+                        else btn.classList.remove('active');
+                    });
+                    card.classList.add('random-highlight');
+                    setTimeout(() => card.classList.remove('random-highlight'), 2000);
+                    break;
+                }
+            }
+        }
+
+        function bindLevelNav() {
+            const btns = document.querySelectorAll('.level-nav button');
+            btns.forEach(btn => {
+                btn.removeEventListener('click', levelClickHandler);
+                btn.addEventListener('click', levelClickHandler);
+            });
+        }
+
+        function levelClickHandler(e) { scrollToLevel(e.currentTarget.getAttribute('data-level')); }
+
+        function showHelpModal() {
+            const modalHtml = `
+                    <div class="help-modal" id="helpModal">
+                        <div class="help-card">
+                            <button class="close-help" id="closeHelpBtn">✕</button>
+                            <h2>📚 狂野飙车9 · 小助手</h2>
+                            <h3>📊 卡片数据解读</h3>
+                            <ul>
+                                <li><strong>等级徽章</strong>：R/S/A/B/C/D 车辆等级。</li>
+                                <li><strong>联赛徽章</strong>：车辆所属联赛（传奇/宗师/精英等）。</li>
+                                <li><strong>赛事标签</strong>：滑流（浅蓝）、经典（深蓝）、对决（紫），表示适合的赛事类型。</li>
+                                <li><strong>手感标签</strong>：船车/虚高（红）、轮椅/跳跃（黄）、稳定（绿），玩家评价。</li>
+                                <li><strong>图纸序列</strong>：每升一星所需图纸数量，🔑表示钥匙车。</li>
+                                <li><strong>四维数据</strong>：最大速度、加速、操控、氮气。右侧的 <span style="color:#F4DD68;">联赛排名</span> 和 <span style="color:#3b82f6;">全车排名</span> 表示该车在同联赛/全车中优于多少百分比的车辆。</li>
+                                <li><strong>氮速</strong>：基础值黑色，加成值带"+"和颜色（<span style="color:#eab308;">单喷黄</span> / <span style="color:#ef4444;">双喷橙</span> / <span style="color:#3b82f6;">蓝喷蓝</span> / <span style="color:#a855f7;">紫喷紫</span>）。</li>
+                                <li><strong>进口零件</strong>：六边形中的数字表示金/紫/蓝零件数量。</li>
+                            </ul>
+                            <h3>🔧 功能操作</h3>
+                            <ul>
+                                <li><strong>排序</strong>：选择字段和升降序。</li>
+                                <li><strong>排序模式</strong>：全局排序或等级内排序。</li>
+                                <li><strong>品牌/联赛筛选</strong>：只显示特定品牌或联赛。</li>
+                                <li><strong>搜索框</strong>：按车名或外号模糊搜索。</li>
+                                <li><strong>对比模式</strong>：点击右下角🔍进入对比模式，勾选两辆车自动弹出对比窗口。</li>
+                                <li><strong>点击卡片</strong>：点击卡片主体弹出车辆详情弹窗（与卡片样式一致）。</li>
+                                <li><strong>等级导航</strong>：底部 D/C/B/A/S/R 按钮，自动滚动到该等级第一辆车。</li>
+                                <li><strong>主题切换</strong>：右下角🌓按钮切换浅色/深色主题。</li>
+                                <li><strong>大师计算器</strong>：从主页进入，可追踪大师任务进度，支持拉满/清空车库。</li>
+                                <li><strong>特殊赛事（新）</strong>：完全自定义赛事，支持工具车、阶段、里程碑、俱乐部奖励、商店包，计算器实时追踪进度与奖励。管理员可通过 <strong>☁️ 发布到云端</strong> 按钮更新活动。</li>
+                            </ul>
+                            <p style="margin-top:16px;">数据基于游戏内真实数值，手动整理，如有错误请见谅。💛</p>
+                        </div>
+                    </div>
+                `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            document.getElementById('closeHelpBtn').addEventListener('click', () => { document.getElementById('helpModal').remove(); });
+            document.getElementById('helpModal').addEventListener('click', (e) => { if (e.target === document.getElementById('helpModal')) document.getElementById('helpModal').remove(); });
+        }
+
+        // ========== 大师计算器 ==========
+        function buildMasterData() {
+            const map = new Map();
+            for (let row of masterRawData) {
+                const masterName = row.master;
+                if (!map.has(masterName)) { map.set(masterName, { masterCar: masterName, tools: [] }); }
+                const scores = row.scores.split('/').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                map.get(masterName).tools.push({ carName: row.tool, level: row.level.trim(), scores: scores });
+            }
+            const tasks = [];
+            for (let [master, data] of map) {
+                const masterInfo = findVehicleInfo(master);
+                const toolsWithInfo = data.tools.map(tool => {
+                    const info = findVehicleInfo(tool.carName);
+                    return { ...tool, ...info, level: tool.level || info.level || '?' };
+                });
+                const id = masterIdMap[master] || '??';
+                tasks.push({ id, masterCar: master, masterInfo, tools: toolsWithInfo });
+            }
+            tasks.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+            return tasks;
+        }
+
+        function getMasterProgressKey(masterName, toolName) { return `master_${masterName}_${toolName}`; }
+
+        function getMasterToolProgress(masterName, toolName) {
+            const key = getMasterProgressKey(masterName, toolName);
+            try { const val = localStorage.getItem(key); return val !== null ? parseInt(val, 10) : 0; } catch { return 0; }
+        }
+
+        function setMasterToolProgress(masterName, toolName, count) {
+            const key = getMasterProgressKey(masterName, toolName);
+            localStorage.setItem(key, String(count));
+        }
+
+        function calcMasterTaskProgress(task) {
+            let total = 0, done = 0;
+            for (let tool of task.tools) {
+                const len = tool.scores.length;
+                total += len;
+                const prog = getMasterToolProgress(task.masterCar, tool.carName);
+                done += prog;
+            }
+            if (task.masterCar === "Peugeot 9x8") { return { total: 38, done: Math.min(done, 38) }; }
+            return { total, done };
+        }
+
+        function calcMasterTotalDoneAll(tasks) {
+            let total = 0;
+            for (let task of tasks) { const { done } = calcMasterTaskProgress(task); total += done; }
+            return total;
+        }
+
+        function isMasterTaskLocked(task, totalDoneAll) {
+            if (task.masterCar === "Bugatti Chiron SuperSport 300+") { return totalDoneAll < 800; }
+            return false;
+        }
+
+        function renderMasterTasks() {
+            const container = document.getElementById('masterCards');
+            const tasks = buildMasterData();
+            const TOTAL_TASKS = 967;
+            const totalDone = calcMasterTotalDoneAll(tasks);
+            const percent = (totalDone / TOTAL_TASKS) * 100;
+            document.getElementById('masterProgressText').textContent = `进度 ${totalDone} / ${TOTAL_TASKS}`;
+            document.getElementById('masterProgressFill').style.width = Math.min(percent, 100) + '%';
+            document.getElementById('masterProgressPercent').textContent = percent.toFixed(1) + '%';
+            let html = '';
+            for (let task of tasks) {
+                const { total, done } = calcMasterTaskProgress(task);
+                const progressPercent = total > 0 ? (done / total) * 100 : 0;
+                const totalDoneAll = calcMasterTotalDoneAll(tasks);
+                const locked = isMasterTaskLocked(task, totalDoneAll);
+                const masterInfo = task.masterInfo || {};
+                const level = masterInfo.level || '?';
+                const needKey = masterInfo.needKey || false;
+                const maxStars = masterInfo.maxStars || 0;
+                const perfScore = masterInfo.perfScore || 0;
+                let cardClass = 'master-card';
+                if (locked) cardClass += ' locked';
+                html += `<div class="${cardClass}" data-master="${task.masterCar}">`;
+                if (locked) { html += `<div class="master-lock-overlay"><span>🔒 需要条件数：800</span></div>`; }
+                html += `<div class="master-task-header">`;
+                html += `<span class="master-task-id">${task.id}</span>`;
+                html += `<div class="master-car-info">`;
+                html += `<span class="master-car-level">${level}</span>`;
+                html += `<span class="master-car-name">${task.masterCar}</span>`;
+                if (needKey) html += `<span class="master-key-icon">🔑</span>`;
+                html += `</div>`;
+                html += `<span class="master-stars">${'⭐'.repeat(maxStars)}</span>`;
+                html += `<span class="master-max-perf">🏁 ${perfScore}</span>`;
+                html += `</div>`;
+                html += `<div class="master-progress-row">`;
+                html += `<span class="label">进度 ${done}/${total}</span>`;
+                html += `<div class="track"><div class="fill" style="width:${progressPercent}%;"></div></div>`;
+                html += `<span class="label">${progressPercent.toFixed(1)}%</span>`;
+                html += `</div>`;
+                html += `<div class="master-tool-section">`;
+                for (let tool of task.tools) {
+                    const toolInfo = tool;
+                    const level = toolInfo.level || '?';
+                    const needKey = toolInfo.needKey || false;
+                    const blueprintColor = toolInfo.blueprintColor || '金色';
+                    const maxStars = toolInfo.maxStars || 0;
+                    const perfScore = toolInfo.perfScore || 0;
+                    const isMasterCar = tool.carName.trim().toLowerCase() === task.masterCar.trim().toLowerCase();
+                    const scores = tool.scores;
+                    const prog = getMasterToolProgress(task.masterCar, tool.carName);
+                    const cellColor = colorMap[blueprintColor] || '#3b82f6';
+                    html += `<div class="master-tool-row">`;
+                    html += `<div class="master-tool-header">`;
+                    html += `<span class="master-tool-level">${level}</span>`;
+                    html += `<span class="master-tool-name" style="${isMasterCar ? 'color:#fbbf24;' : ''}">${tool.carName}</span>`;
+                    if (needKey) html += `<span class="master-tool-key">🔑</span>`;
+                    if (isMasterCar) html += `<span class="master-tool-master-badge">大师车</span>`;
+                    html += `<span class="master-tool-stars">${'⭐'.repeat(maxStars)}</span>`;
+                    html += `<span class="master-tool-max-perf">🏁 ${perfScore}</span>`;
+                    html += `</div>`;
+                    html += `<div class="master-perf-cells">`;
+                    const unlockDim = (prog > 0) ? 'dim' : '';
+                    html += `<span class="master-perf-cell unlock-label ${unlockDim}" data-master="${task.masterCar}" data-tool="${tool.carName}" data-idx="-1">未解锁</span>`;
+                    for (let i = 0; i < scores.length; i++) {
+                        const score = scores[i];
+                        let cls = 'master-perf-cell';
+                        if (i < prog) cls += ' unlocked';
+                        else cls += ' dim';
+                        if (locked) cls += ' dim';
+                        html += `<span class="${cls}" style="${i < prog ? `--cell-color:${cellColor};background-color:${cellColor};` : ''}" data-master="${task.masterCar}" data-tool="${tool.carName}" data-idx="${i}">${score}</span>`;
+                    }
+                    html += `</div>`;
+                    html += `</div>`;
+                }
+                html += `</div>`;
+                html += `</div>`;
+            }
+            container.innerHTML = html;
+            container.querySelectorAll('.master-perf-cell').forEach(el => {
+                const card = el.closest('.master-card');
+                if (card && card.classList.contains('locked')) return;
+                el.addEventListener('click', function(e) {
+                    const master = this.dataset.master;
+                    const tool = this.dataset.tool;
+                    const idx = parseInt(this.dataset.idx, 10);
+                    if (isNaN(idx) || idx < 0) {
+                        const current = getMasterToolProgress(master, tool);
+                        if (current > 0) { setMasterToolProgress(master, tool, 0); renderMasterTasks(); }
+                        return;
+                    }
+                    const current = getMasterToolProgress(master, tool);
+                    let newProg;
+                    if (current > idx) newProg = idx;
+                    else newProg = idx + 1;
+                    const taskData = buildMasterData().find(t => t.masterCar === master);
+                    if (taskData) {
+                        const toolObj = taskData.tools.find(t => t.carName === tool);
+                        if (toolObj) { newProg = Math.max(0, Math.min(newProg, toolObj.scores.length)); }
+                    }
+                    setMasterToolProgress(master, tool, newProg);
+                    renderMasterTasks();
+                });
+            });
+        }
+
+        function fillMasterAll() {
+            const tasks = buildMasterData();
+            for (let task of tasks) {
+                for (let tool of task.tools) {
+                    const len = tool.scores.length;
+                    setMasterToolProgress(task.masterCar, tool.carName, len);
+                }
+            }
+            renderMasterTasks();
+        }
+
+        function clearMasterAll() {
+            const tasks = buildMasterData();
+            for (let task of tasks) {
+                for (let tool of task.tools) {
+                    setMasterToolProgress(task.masterCar, tool.carName, 0);
+                }
+            }
+            renderMasterTasks();
+        }
+
+        // ========== 特殊赛事 - 编辑器 ==========
+        function addTool(toolName) {
+            if (selectedTools.includes(toolName)) return;
+            selectedTools.push(toolName);
+            renderToolList();
+        }
+        function removeTool(toolName) {
+            selectedTools = selectedTools.filter(t => t !== toolName);
+            renderToolList();
+        }
+
+        function renderToolList() {
+            const container = document.getElementById('toolList');
+            if (selectedTools.length === 0) {
+                container.innerHTML = '<div style="color:#94a3b8; font-size:0.9rem;">暂无工具车</div>';
+                return;
+            }
+            let html = '';
+            selectedTools.forEach(name => {
+                const info = findVehicleInfo(name);
+                html += `
+                        <div class="editor-tool-row">
+                            <span class="tool-level">${info.level}</span>
+                            <span class="tool-name">${name}</span>
+                            <span style="font-size:0.8rem; color:#6c757d;">${info.needKey ? '🔑' : ''}</span>
+                            <button class="editor-btn editor-btn-danger" style="margin-left:auto;" data-tool="${name}">✕</button>
+                        </div>
+                    `;
+            });
+            container.innerHTML = html;
+            container.querySelectorAll('.editor-btn-danger').forEach(btn => {
+                btn.addEventListener('click', function() { const name = this.dataset.tool; removeTool(name); });
+            });
+        }
+
+        function addStage() {
+            stages.push({ toolName: selectedTools.length > 0 ? selectedTools[0] : '', provideTestDrive: true, unlockConditions: 0, tasks: [] });
+            renderStages();
+        }
+        function removeStage(index) { stages.splice(index, 1); renderStages(); }
+        function addTask(stageIndex) {
+            stages[stageIndex].tasks.push({ totalConditions: 1, requiredStar: 0, rewardType: '特殊赛事礼包', rewardValue: 0, targetVehicle: '' });
+            renderStages();
+        }
+        function removeTask(stageIndex, taskIndex) {
+            stages[stageIndex].tasks.splice(taskIndex, 1);
+            renderStages();
+        }
+
+        function getRewardOptions(selectedType = '') {
+            const baseTypes = [
+                '特殊赛事礼包', '主题车图纸', '主题车金卡', '主题车钥匙', '主题车车贴',
+                '金币', '蓝币',
+                '万能图纸 D', '万能图纸 C', '万能图纸 B', '万能图纸 A', '万能图纸 S',
+                '万能金卡 D', '万能金卡 C', '万能金卡 B', '万能金卡 A', '万能金卡 S',
+                '万能升星卡 D', '万能升星卡 C', '万能升星卡 B', '万能升星卡 A', '万能升星卡 S',
+                '图纸包 D', '图纸包 D+', '图纸包 D级进阶包',
+                '图纸包 C', '图纸包 C+', '图纸包 C级进阶包', '图纸包 C级职业包',
+                '图纸包 B', '图纸包 B+', '图纸包 B级进阶包', '图纸包 B级职业包', '图纸包 B级精英包',
+                '图纸包 A', '图纸包 A+', '图纸包 A级进阶包', '图纸包 A级职业包', '图纸包 A级精英包', '图纸包 A级冠军包',
+                '图纸包 S', '图纸包 S+', '图纸包 S级进阶包', '图纸包 S级职业包', '图纸包 S级精英包', '图纸包 S级冠军包'
+            ];
+            const toolRelated = ['工具车图纸', '工具车钥匙', '工具车车贴', '工具车金卡'];
+            const allTypes = [...baseTypes, ...toolRelated, '__custom__'];
+            return allTypes.map(t => `<option value="${t}" ${t===selectedType?'selected':''}>${t}</option>`).join('');
+        }
+
+        function renderStages() {
+            const container = document.getElementById('stageList');
+            if (stages.length === 0) {
+                container.innerHTML = '<div style="color:#94a3b8; font-size:0.9rem;">暂无阶段</div>';
+                return;
+            }
+            let html = '';
+            stages.forEach((stage, idx) => {
+                html += `<div class="editor-stage-row" data-stage-idx="${idx}">`;
+                html += `<div class="editor-stage-left-bar">阶段 ${idx+1}</div>`;
+                html += `<div class="editor-stage-content">`;
+                html += `<div class="stage-header-controls">`;
+                html += `<label>工具车：<select class="editor-select" data-field="toolName" data-stage-idx="${idx}">`;
+                selectedTools.forEach(t => {
+                    html += `<option value="${t}" ${t===stage.toolName?'selected':''}>${t}</option>`;
+                });
+                html += `</select></label>`;
+                html += `<label><input type="checkbox" data-field="provideTestDrive" data-stage-idx="${idx}" ${stage.provideTestDrive!==false?'checked':''} /> 提供试驾</label>`;
+                html += `<label>解锁需累计：<input type="number" class="editor-input" data-field="unlockConditions" data-stage-idx="${idx}" value="${stage.unlockConditions||0}" style="width:60px;" /></label>`;
+                html += `<button class="editor-btn editor-btn-danger" data-stage-idx="${idx}" style="margin-left:auto;">✕</button>`;
+                html += `</div>`;
+                html += `<div class="stage-task-container">`;
+                stage.tasks.forEach((task, tIdx) => {
+                    const starClass = task.requiredStar > 0 ? 'card-star-locked' : 'card-0star';
+                    const circleClass = task.requiredStar > 0 ? 'circle-red' : 'circle-blue';
+                    const isToolRelated = ['工具车图纸','工具车钥匙','工具车车贴','工具车金卡'].includes(task.rewardType);
+                    html += `<div class="stage-task-card ${starClass}" data-stage-idx="${idx}" data-task-idx="${tIdx}">`;
+                    html += `<div class="task-card-top"><span>${task.rewardType}</span><span>x${task.rewardValue||0}</span></div>`;
+                    const starCount = task.requiredStar || 0;
+                    html += `<div class="task-card-icon">${'⭐'.repeat(starCount)}</div>`;
+                    html += `<div class="task-card-circle ${circleClass}"><input type="number" data-field="totalConditions" data-stage-idx="${idx}" data-task-idx="${tIdx}" value="${task.totalConditions||1}" /></div>`;
+                    html += `<div class="task-card-controls">`;
+                    html += `<div class="ctrl-row"><span>星级</span><input type="number" data-field="requiredStar" data-stage-idx="${idx}" data-task-idx="${tIdx}" value="${task.requiredStar||0}" style="width:30px;" /></div>`;
+                    html += `<div class="ctrl-row"><select data-field="rewardType" data-stage-idx="${idx}" data-task-idx="${tIdx}">${getRewardOptions(task.rewardType)}</select></div>`;
+                    if (isToolRelated) {
+                        html += `<div class="ctrl-row"><select data-field="targetVehicle" data-stage-idx="${idx}" data-task-idx="${tIdx}"><option value="">请选择</option>`;
+                        selectedTools.forEach(t => {
+                            html += `<option value="${t}" ${t===task.targetVehicle?'selected':''}>${t}</option>`;
+                        });
+                        html += `</select></div>`;
+                    } else {
+                        html += `<input type="hidden" data-field="targetVehicle" data-stage-idx="${idx}" data-task-idx="${tIdx}" value="${task.targetVehicle||''}" />`;
+                    }
+                    html += `<div class="ctrl-row"><input type="number" data-field="rewardValue" data-stage-idx="${idx}" data-task-idx="${tIdx}" value="${task.rewardValue||0}" style="width:40px;" /></div>`;
+                    html += `<button class="btn-remove-task" data-stage-idx="${idx}" data-task-idx="${tIdx}">✕</button>`;
+                    html += `</div></div>`;
+                });
+                html += `</div>`;
+                html += `<button class="editor-btn" data-stage-idx="${idx}" data-add-task style="align-self:flex-start;">+ 添加条件</button>`;
+                html += `</div></div>`;
+            });
+            container.innerHTML = html;
+
+            container.querySelectorAll('select, input').forEach(el => {
+                el.addEventListener('change', function() {
+                    const sIdx = parseInt(this.dataset.stageIdx);
+                    if (isNaN(sIdx)) return;
+                    const tIdx = parseInt(this.dataset.taskIdx);
+                    const field = this.dataset.field;
+                    if (!isNaN(tIdx)) {
+                        if (field === 'rewardType') {
+                            stages[sIdx].tasks[tIdx].rewardType = this.value;
+                            if (!['工具车图纸','工具车钥匙','工具车车贴','工具车金卡'].includes(this.value)) {
+                                stages[sIdx].tasks[tIdx].targetVehicle = '';
+                            }
+                            renderStages();
+                            return;
+                        } else if (field === 'totalConditions') { stages[sIdx].tasks[tIdx].totalConditions = parseInt(this.value) || 0; } else if (field === 'requiredStar') { stages[sIdx].tasks[tIdx].requiredStar = parseInt(this.value) || 0; } else if (field === 'targetVehicle') { stages[sIdx].tasks[tIdx].targetVehicle = this.value; } else if (field === 'rewardValue') { stages[sIdx].tasks[tIdx].rewardValue = parseInt(this.value) || 0; }
+                    } else {
+                        if (field === 'toolName') { stages[sIdx].toolName = this.value; } else if (field === 'unlockConditions') { stages[sIdx].unlockConditions = parseInt(this.value) || 0; } else if (field === 'provideTestDrive') { stages[sIdx].provideTestDrive = this.checked; }
+                    }
+                });
+                el.addEventListener('input', function() {
+                    const sIdx = parseInt(this.dataset.stageIdx);
+                    if (isNaN(sIdx)) return;
+                    const tIdx = parseInt(this.dataset.taskIdx);
+                    const field = this.dataset.field;
+                    if (!isNaN(tIdx)) {
+                        if (field === 'totalConditions') { stages[sIdx].tasks[tIdx].totalConditions = parseInt(this.value) || 0; } else if (field === 'requiredStar') { stages[sIdx].tasks[tIdx].requiredStar = parseInt(this.value) || 0; } else if (field === 'rewardValue') { stages[sIdx].tasks[tIdx].rewardValue = parseInt(this.value) || 0; }
+                    } else {
+                        if (field === 'unlockConditions') { stages[sIdx].unlockConditions = parseInt(this.value) || 0; }
+                    }
+                });
+            });
+
+            container.querySelectorAll('.btn-remove-task').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const sIdx = parseInt(this.dataset.stageIdx);
+                    const tIdx = parseInt(this.dataset.taskIdx);
+                    if (!isNaN(sIdx) && !isNaN(tIdx)) removeTask(sIdx, tIdx);
+                });
+            });
+            container.querySelectorAll('[data-add-task]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const sIdx = parseInt(this.dataset.stageIdx);
+                    if (!isNaN(sIdx)) addTask(sIdx);
+                });
+            });
+            container.querySelectorAll('.editor-btn-danger[data-stage-idx]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const sIdx = parseInt(this.dataset.stageIdx);
+                    if (!isNaN(sIdx)) removeStage(sIdx);
+                });
+            });
+        }
+
+        function addMilestone() { milestones.push({ conditions: 0, rewardType: '主题车图纸', rewardValue: 0, targetVehicle: '' }); renderMilestones(); }
+        function removeMilestone(index) { milestones.splice(index, 1); renderMilestones(); }
+
+        function renderMilestones() {
+            const container = document.getElementById('milestoneList');
+            if (milestones.length === 0) { container.innerHTML = '<div style="color:#94a3b8;">暂无里程碑</div>'; return; }
+            let html = '';
+            milestones.forEach((m, idx) => {
+                html += `<div class="editor-milestone-row">`;
+                html += `<label>条件 <input type="number" class="editor-input" data-milestone="${idx}" data-field="conditions" value="${m.conditions}" style="width:60px;" /></label>`;
+                html += `<label>奖励 <select class="editor-select" data-milestone="${idx}" data-field="rewardType">${getRewardOptions(m.rewardType)}</select></label>`;
+                const isTool = ['工具车图纸','工具车钥匙','工具车车贴','工具车金卡'].includes(m.rewardType);
+                if (isTool) {
+                    html += `<label>车辆 <select class="editor-select" data-milestone="${idx}" data-field="targetVehicle"><option value="">请选择</option>`;
+                    selectedTools.forEach(t => {
+                        html += `<option value="${t}" ${t===m.targetVehicle?'selected':''}>${t}</option>`;
+                    });
+                    html += `</select></label>`;
+                } else {
+                    html += `<input type="hidden" data-milestone="${idx}" data-field="targetVehicle" value="${m.targetVehicle||''}" />`;
+                }
+                html += `<label>数量 <input type="number" class="editor-input" data-milestone="${idx}" data-field="rewardValue" value="${m.rewardValue}" style="width:60px;" /></label>`;
+                html += `<button class="editor-btn editor-btn-danger" data-milestone="${idx}">✕</button>`;
+                html += `</div>`;
+            });
+            container.innerHTML = html;
+            container.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('change', function() {
+                    const idx = parseInt(this.dataset.milestone);
+                    if (isNaN(idx)) return;
+                    const field = this.dataset.field;
+                    if (field === 'conditions') { milestones[idx].conditions = parseInt(this.value) || 0; } else if (field === 'rewardType') { milestones[idx].rewardType = this.value; } else if (field === 'targetVehicle') { milestones[idx].targetVehicle = this.value; } else if (field === 'rewardValue') { milestones[idx].rewardValue = parseInt(this.value) || 0; }
+                });
+            });
+            container.querySelectorAll('.editor-btn-danger').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.milestone);
+                    if (!isNaN(idx)) removeMilestone(idx);
+                });
+            });
+        }
+
+        function addClubReward() { clubRewards.push({ rewardType: '特殊赛事礼包', rewardValue: 0, targetVehicle: '' }); renderClubRewards(); }
+        function removeClubReward(index) { clubRewards.splice(index, 1); renderClubRewards(); }
+
+        function renderClubRewards() {
+            const container = document.getElementById('clubList');
+            if (clubRewards.length === 0) { container.innerHTML = '<div style="color:#94a3b8;">暂无俱乐部奖励</div>'; return; }
+            let html = '';
+            clubRewards.forEach((c, idx) => {
+                const isTool = ['工具车图纸','工具车钥匙','工具车车贴','工具车金卡'].includes(c.rewardType);
+                html += `<div class="editor-club-row">`;
+                html += `<label>奖励 <select class="editor-select" data-club="${idx}" data-field="rewardType">${getRewardOptions(c.rewardType)}</select></label>`;
+                if (isTool) {
+                    html += `<label>车辆 <select class="editor-select" data-club="${idx}" data-field="targetVehicle"><option value="">请选择</option>`;
+                    selectedTools.forEach(t => {
+                        html += `<option value="${t}" ${t===c.targetVehicle?'selected':''}>${t}</option>`;
+                    });
+                    html += `</select></label>`;
+                } else {
+                    html += `<input type="hidden" data-club="${idx}" data-field="targetVehicle" value="${c.targetVehicle||''}" />`;
+                }
+                html += `<label>数量 <input type="number" class="editor-input" data-club="${idx}" data-field="rewardValue" value="${c.rewardValue}" style="width:60px;" /></label>`;
+                html += `<button class="editor-btn editor-btn-danger" data-club="${idx}">✕</button>`;
+                html += `</div>`;
+            });
+            container.innerHTML = html;
+            container.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('change', function() {
+                    const idx = parseInt(this.dataset.club);
+                    if (isNaN(idx)) return;
+                    const field = this.dataset.field;
+                    if (field === 'rewardType') {
+                        clubRewards[idx].rewardType = this.value;
+                        if (!['工具车图纸','工具车钥匙','工具车车贴','工具车金卡'].includes(this.value)) {
+                            clubRewards[idx].targetVehicle = '';
+                        }
+                        renderClubRewards();
+                    } else if (field === 'targetVehicle') {
+                        clubRewards[idx].targetVehicle = this.value;
+                    } else if (field === 'rewardValue') {
+                        clubRewards[idx].rewardValue = parseInt(this.value) || 0;
+                    }
+                });
+            });
+            container.querySelectorAll('.editor-btn-danger').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.club);
+                    if (!isNaN(idx)) removeClubReward(idx);
+                });
+            });
+        }
+
+        function saveEventDataFromEditor() {
+            const themeCar = document.getElementById('eventThemeCar').value.trim();
+            const title = document.getElementById('eventTitle').value.trim();
+            const eventData = {
+                version: (specialEventData?.version || 0) + 1,
+                themeCar, title,
+                tools: selectedTools.map(name => { const info = findVehicleInfo(name); return { name, level: info.level, needKey: info.needKey, maxStars: info.maxStars, blueprintColor: info.blueprintColor }; }),
+                stages: stages.map(s => ({ ...s })),
+                milestones: milestones.filter(m => m.conditions > 0 && m.rewardType && m.rewardType !== '__custom__' && m.rewardValue > 0),
+                clubRewards: clubRewards.filter(c => c.rewardType && c.rewardType !== '__custom__' && c.rewardValue > 0),
+                packs: {
+                    bluePrintBlue: document.getElementById('packBluePrintBlue').checked,
+                    bluePrintBlueCond: parseInt(document.getElementById('packBluePrintBlueCond').value) || 0,
+                    bluePrintGold: document.getElementById('packBluePrintGold').checked,
+                    bluePrintGoldCond: parseInt(document.getElementById('packBluePrintGoldCond').value) || 0,
+                    keyBlue: document.getElementById('packKeyBlue').checked,
+                    keyBlueCond: parseInt(document.getElementById('packKeyBlueCond').value) || 0,
+                    keyGold: document.getElementById('packKeyGold').checked,
+                    keyGoldCond: parseInt(document.getElementById('packKeyGoldCond').value) || 0
+                }
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(eventData));
+            specialEventData = eventData;
+            alert('✅ 赛事数据已保存到本地！');
+        }
+
+        function loadEventDataToEditor(data) {
+            if (!data) return;
+            document.getElementById('eventThemeCar').value = data.themeCar || '';
+            document.getElementById('eventTitle').value = data.title || '';
+            selectedTools = data.tools ? data.tools.map(t => t.name) : [];
+            renderToolList();
+            stages = data.stages ? data.stages.map(s => ({ ...s, tasks: s.tasks ? s.tasks.map(t => ({ ...t })) : [] })) : [];
+            renderStages();
+            milestones = data.milestones ? data.milestones.map(m => ({ ...m })) : [];
+            renderMilestones();
+            clubRewards = data.clubRewards ? data.clubRewards.map(c => ({ ...c })) : [];
+            renderClubRewards();
+            if (data.packs) {
+                document.getElementById('packBluePrintBlue').checked = data.packs.bluePrintBlue || false;
+                document.getElementById('packBluePrintBlueCond').value = data.packs.bluePrintBlueCond || 0;
+                document.getElementById('packBluePrintGold').checked = data.packs.bluePrintGold || false;
+                document.getElementById('packBluePrintGoldCond').value = data.packs.bluePrintGoldCond || 0;
+                document.getElementById('packKeyBlue').checked = data.packs.keyBlue || false;
+                document.getElementById('packKeyBlueCond').value = data.packs.keyBlueCond || 0;
+                document.getElementById('packKeyGold').checked = data.packs.keyGold || false;
+                document.getElementById('packKeyGoldCond').value = data.packs.keyGoldCond || 0;
+            }
+        }
+
+        // ========== 特殊赛事 - 计算器 ==========
+        function renderCalculator() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) { alert('请先编辑并保存赛事数据！'); return; }
+            try { specialEventData = JSON.parse(raw); } catch (e) { alert('数据损坏，请重新编辑。'); return; }
+            const data = specialEventData;
+            if (!data.tools || data.tools.length === 0) { alert('请至少添加一辆工具车。'); return; }
+
+            data.tools.forEach(tool => {
+                const name = tool.name;
+                if (!calcVehicleStates[name]) calcVehicleStates[name] = { star: 0, unlocked: false };
+            });
+
+            document.getElementById('calcTitle').textContent = data.title || '特殊赛事';
+            const updateTime = localStorage.getItem('lastEventUpdate') || '未知';
+            document.getElementById('calcUpdateTime').textContent = `📅 数据版本: v${data.version || '?'}  ·  加载于: ${updateTime}`;
+            renderCalcVehicles(data);
+            renderCalcStages(data);
+            renderCalcRewards(data);
+        }
+
+        function renderCalcVehicles(data) {
+            const container = document.getElementById('calcVehicles');
+            let html = '<div style="font-weight:600; margin-bottom:8px;">🚗 工具车</div>';
+            data.tools.forEach(tool => {
+                const state = calcVehicleStates[tool.name] || { star: 0, unlocked: false };
+                const minStar = tool.needKey ? 1 : 0;
+                html += `<div class="calc-vehicle-row"><span class="vehicle-level">${tool.level}</span><span class="vehicle-name">${tool.name}</span><div class="star-selector">`;
+                for (let s = minStar; s <= tool.maxStars; s++) {
+                    html += `<button class="${state.star===s?'active':''}" data-tool="${tool.name}" data-star="${s}">${s}</button>`;
+                }
+                html += `</div>`;
+                if (tool.needKey) {
+                    html += `<div class="key-toggle"><button class="${state.unlocked?'active':''}" data-tool="${tool.name}" data-key="unlock">已解锁</button><button class="${!state.unlocked?'active':''}" data-tool="${tool.name}" data-key="lock">未解锁</button></div>`;
+                } else {
+                    html += `<span style="font-size:0.8rem; color:#6c757d;">${state.star>0?'✅ 已解锁':'🔒 未解锁'}</span>`;
+                }
+                html += `<button class="view-card-btn" data-tool="${tool.name}">查看卡片</button></div>`;
+            });
+            container.innerHTML = html;
+            container.querySelectorAll('.star-selector button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const state = calcVehicleStates[this.dataset.tool];
+                    if (!state) return;
+                    state.star = parseInt(this.dataset.star);
+                    const tool = specialEventData.tools.find(t => t.name === this.dataset.tool);
+                    if (tool && !tool.needKey) state.unlocked = state.star > 0;
+                    renderCalculator();
+                });
+            });
+            container.querySelectorAll('.key-toggle button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const state = calcVehicleStates[this.dataset.tool];
+                    if (!state) return;
+                    state.unlocked = this.dataset.key === 'unlock';
+                    if (state.unlocked && state.star === 0) state.star = 1;
+                    renderCalculator();
+                });
+            });
+            container.querySelectorAll('.view-card-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const car = vehiclesData.find(v => v.name === this.dataset.tool);
+                    if (car) showDetailModal(car);
+                });
+            });
+        }
+
+        function renderCalcStages(data) {
+            const container = document.getElementById('calcStages');
+            let html = '<div style="font-weight:600; margin-bottom:12px;">📋 阶段进度</div>';
+            let cumDone = 0;
+            const stageResults = [];
+            data.stages.forEach((stage, idx) => {
+                const tool = data.tools.find(t => t.name === stage.toolName);
+                if (!tool) { stageResults.push({ unlocked: false, total: 0, done: 0, cumDone: 0 }); return; }
+                const state = calcVehicleStates[stage.toolName] || { star: 0, unlocked: false };
+                const hasVehicle = tool.needKey ? state.unlocked : state.star > 0;
+                let canCompleteBase = true;
+                if (!stage.provideTestDrive && !hasVehicle) canCompleteBase = false;
+                const isUnlocked = cumDone >= (stage.unlockConditions || 0);
+                let total = 0, done = 0;
+                (stage.tasks || []).forEach(task => {
+                    const cond = task.totalConditions || 0;
+                    total += cond;
+                    if (canCompleteBase && isUnlocked && (task.requiredStar <= state.star)) done += cond;
+                });
+                if (isUnlocked) cumDone += done;
+                stageResults.push({ unlocked: isUnlocked, total, done, cumDone, toolName: stage.toolName });
+            });
+            stageResults.forEach((res, idx) => {
+                const stage = data.stages[idx];
+                const icon = res.unlocked ? '☑' : '☒';
+                const pct = res.total > 0 ? (res.done / res.total * 100) : 0;
+                html += `<div class="calc-stage-row"><div class="stage-row-header"><span class="stage-icon">${icon}</span><span class="stage-desc">阶段 ${idx+1}</span><span>工具车：${res.toolName}</span><span>${res.done}/${res.total}</span></div><div class="stage-progress-wrap"><div class="track"><div class="fill" style="width:${pct}%;"></div></div><span class="label">${pct.toFixed(0)}%</span></div><div style="font-size:0.8rem; color:#94a3b8;">累计：${res.cumDone}</div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderCalcRewards(data) {
+            const container = document.getElementById('calcRewards');
+            const rewardMap = {};
+
+            function addReward(type, value, isDone, targetVehicle) {
+                if (!type || type === '__custom__' || value === 0) return;
+                let key = type;
+                const toolRelated = ['工具车图纸','工具车钥匙','工具车车贴','工具车金卡'];
+                if (toolRelated.includes(type) && targetVehicle) {
+                    key = `${targetVehicle} ${type}`;
+                }
+                if (!rewardMap[key]) rewardMap[key] = { total: 0, done: 0 };
+                rewardMap[key].total += value;
+                if (isDone) rewardMap[key].done += value;
+            }
+
+            let cumDone = 0;
+            data.stages.forEach((stage) => {
+                const tool = data.tools.find(t => t.name === stage.toolName);
+                if (!tool) return;
+                const state = calcVehicleStates[stage.toolName] || { star: 0, unlocked: false };
+                const hasVehicle = tool.needKey ? state.unlocked : state.star > 0;
+                let canCompleteBase = true;
+                if (!stage.provideTestDrive && !hasVehicle) canCompleteBase = false;
+                const isUnlocked = cumDone >= (stage.unlockConditions || 0);
+                let stageDone = 0;
+                (stage.tasks || []).forEach(task => {
+                    const cond = task.totalConditions || 0;
+                    const rewardValue = task.rewardValue || 0;
+                    const totalVal = cond * rewardValue;
+                    const isTaskDone = canCompleteBase && isUnlocked && (task.requiredStar <= state.star);
+                    if (isTaskDone) {
+                        stageDone += cond;
+                    }
+                    addReward(task.rewardType, totalVal, isTaskDone, task.targetVehicle);
+                });
+                if (isUnlocked) cumDone += stageDone;
+            });
+
+            data.milestones.forEach(m => {
+                const isDone = cumDone >= m.conditions;
+                addReward(m.rewardType, m.rewardValue, isDone, m.targetVehicle);
+            });
+
+            data.clubRewards.forEach(c => {
+                addReward(c.rewardType, c.rewardValue, true, c.targetVehicle);
+            });
+
+            let html = '<div style="font-weight:600; margin-bottom:8px;">🎁 奖励汇总</div>';
+            const sortedKeys = Object.keys(rewardMap).sort();
+            if (sortedKeys.length === 0) {
+                html += '<div style="color:#94a3b8;">暂无奖励数据</div>';
+            } else {
+                const general = sortedKeys.filter(k => !k.includes('万能'));
+                const wildcard = sortedKeys.filter(k => k.includes('万能'));
+                if (general.length) {
+                    html += `<div class="calc-reward-row">`;
+                    general.forEach(key => {
+                        const v = rewardMap[key];
+                        html += `<span class="reward-item">${key}：<span class="num done">${v.done.toLocaleString()}</span> / <span class="num total">${v.total.toLocaleString()}</span></span>`;
+                    });
+                    html += `</div>`;
+                }
+                if (wildcard.length) {
+                    html += `<div style="font-size:0.9rem; font-weight:600; margin-top:12px; color:#fbbf24;">🌟 万能资源汇总</div>`;
+                    html += `<div class="calc-reward-row">`;
+                    wildcard.forEach(key => {
+                        const v = rewardMap[key];
+                        html += `<span class="reward-item">${key}：<span class="num done">${v.done.toLocaleString()}</span> / <span class="num total">${v.total.toLocaleString()}</span></span>`;
+                    });
+                    html += `</div>`;
+                }
+            }
+
+            const totalAll = data.stages.reduce((s, st) => s + st.tasks.reduce((ts, t) => ts + (t.totalConditions||0), 0), 0);
+            html += `<div style="margin-top:12px; font-size:0.9rem;">进度（已完成条件/总条件）：${cumDone} / ${totalAll}</div>`;
+
+            const packs = data.packs || {};
+            const packItems = [];
+            if (packs.bluePrintBlue) packItems.push(`📘 蓝币图纸包：${cumDone>=packs.bluePrintBlueCond?'✅ 已解锁':`🔒 ${cumDone}/${packs.bluePrintBlueCond}`}`);
+            if (packs.bluePrintGold) packItems.push(`📗 点券图纸包：${cumDone>=packs.bluePrintGoldCond?'✅ 已解锁':`🔒 ${cumDone}/${packs.bluePrintGoldCond}`}`);
+            if (packs.keyBlue) packItems.push(`🔑 蓝币钥匙包：${cumDone>=packs.keyBlueCond?'✅ 已解锁':`🔒 ${cumDone}/${packs.keyBlueCond}`}`);
+            if (packs.keyGold) packItems.push(`🔑 点券钥匙包：${cumDone>=packs.keyGoldCond?'✅ 已解锁':`🔒 ${cumDone}/${packs.keyGoldCond}`}`);
+            if (packItems.length > 0) html += `<div class="calc-reward-row">${packItems.map(i => `<span class="reward-item">${i}</span>`).join('')}</div>`;
+
+            let keyUnlockCond = Infinity;
+            data.milestones.forEach(m => { if (m.rewardType && m.rewardType.includes('钥匙') && m.conditions < keyUnlockCond) keyUnlockCond = m.conditions; });
+            html += `<div class="calc-reward-row"><span class="reward-item">🔑 ${data.themeCar||'主题车'}钥匙条件：${keyUnlockCond!==Infinity?`${cumDone}/${keyUnlockCond}`:'无'}</span></div>`;
+
+            if (data.milestones && data.milestones.length > 0) {
+                html += `<div style="font-weight:600; margin-top:16px;">🏆 里程碑</div><div class="calc-milestone-simple">`;
+                data.milestones.forEach(m => {
+                    let name = m.rewardType;
+                    if (m.rewardType.includes('工具车') && m.targetVehicle) name = `${m.targetVehicle} ${m.rewardType.replace('工具车','')}`;
+                    html += `<div class="ms-item" style="${cumDone>=m.conditions?'border-color:#22c55e;':'border-color:#ef4444;'}">${m.conditions}条件 → ${name} x${m.rewardValue}</div>`;
+                });
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function fillAllCalc() {
+            if (!specialEventData) return;
+            specialEventData.tools.forEach(tool => {
+                const state = calcVehicleStates[tool.name];
+                if (!state) return;
+                state.star = tool.maxStars || 0;
+                if (tool.needKey) state.unlocked = true;
+            });
+            renderCalculator();
+        }
+
+        function clearAllCalc() {
+            if (!specialEventData) return;
+            specialEventData.tools.forEach(tool => {
+                const state = calcVehicleStates[tool.name];
+                if (!state) return;
+                state.star = 0;
+                if (tool.needKey) state.unlocked = false;
+            });
+            renderCalculator();
+        }
+
+        // ========== 远程同步（核心新增功能） ==========
+        async function loadRemoteEventData() {
+            try {
+                const url = REMOTE_EVENT_URL + '?t=' + Date.now();
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP 错误: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (typeof data !== 'object' || !data.hasOwnProperty('tools')) {
+                    throw new Error('远程数据格式无效');
+                }
+
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                specialEventData = data;
+                localStorage.setItem('lastEventUpdate', new Date().toLocaleString());
+
+                console.log('✅ 远程活动数据加载成功，版本:', data.version || '未知');
+                return true;
+            } catch (error) {
+                console.warn('⚠️ 远程加载失败，使用本地缓存', error);
+                const local = localStorage.getItem(STORAGE_KEY);
+                if (local) {
+                    try {
+                        specialEventData = JSON.parse(local);
+                        console.log('📦 已加载本地缓存数据');
+                    } catch (e) {
+                        console.error('本地缓存损坏');
+                    }
+                }
+                return false;
+            }
+        }
+
+        async function syncToRemote() {
+            // 先保存当前编辑器数据到内存和本地
+            saveEventDataFromEditor();
+
+            if (!specialEventData) {
+                alert('❌ 没有数据可以发布，请先编辑并保存赛事！');
+                return;
+            }
+
+            const jsonStr = JSON.stringify(specialEventData, null, 2);
+
+            // 创建一个下载链接，让管理员手动上传到 GitHub
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const title = specialEventData.title || '未命名活动';
+            a.download = `event.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert(`✅ 已生成 event.json 文件！\n\n请按以下步骤发布到云端：\n1. 登录 GitHub\n2. 进入仓库 LeoProMax0336/A9-Assistant\n3. 点击 event.json 文件\n4. 点击编辑（铅笔图标）\n5. 将下载的文件内容全选复制，粘贴进去覆盖\n6. 提交更改\n\n所有玩家刷新页面即可获取最新活动！`);
+        }
+
+        // ========== 导航函数 ==========
+        function goHome() {
+            homePage.style.display = 'flex';
+            functionContainer.classList.remove('active');
+            document.getElementById('levelNav').style.display = 'none';
+            document.getElementById('floatGroup').style.display = 'none';
+            exitCompareBtn.style.display = 'none';
+            if (compareMode) exitCompareMode();
+            window.scrollTo(0, 0);
+        }
+
+        function switchToCars() {
+            homePage.style.display = 'none';
+            functionContainer.classList.add('active');
+            carsFunction.style.display = 'block';
+            masterFunction.style.display = 'none';
+            specialFunction.style.display = 'none';
+            document.getElementById('levelNav').style.display = 'flex';
+            document.getElementById('floatGroup').style.display = 'flex';
+            compareBtn.style.display = 'flex';
+            currentAppMode = 'cars';
+            renderCars();
+            window.scrollTo(0, 0);
+        }
+
+        function switchToMaster() {
+            homePage.style.display = 'none';
+            functionContainer.classList.add('active');
+            carsFunction.style.display = 'none';
+            masterFunction.style.display = 'block';
+            specialFunction.style.display = 'none';
+            document.getElementById('levelNav').style.display = 'none';
+            document.getElementById('floatGroup').style.display = 'none';
+            compareBtn.style.display = 'none';
+            exitCompareBtn.style.display = 'none';
+            currentAppMode = 'master';
+            renderMasterTasks();
+            window.scrollTo(0, 0);
+        }
+
+        function switchToSpecial() {
+            homePage.style.display = 'none';
+            functionContainer.classList.add('active');
+            carsFunction.style.display = 'none';
+            masterFunction.style.display = 'none';
+            specialFunction.style.display = 'block';
+            document.getElementById('levelNav').style.display = 'none';
+            document.getElementById('floatGroup').style.display = 'none';
+            compareBtn.style.display = 'none';
+            exitCompareBtn.style.display = 'none';
+            currentAppMode = 'special';
+            // 先尝试加载远程数据，再显示界面
+            loadRemoteEventData().then(() => {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    try {
+                        const data = JSON.parse(raw);
+                        specialEventData = data;
+                        loadEventDataToEditor(data);
+                        document.getElementById('specialEditor').style.display = 'none';
+                        document.getElementById('specialCalculator').style.display = 'block';
+                        renderCalculator();
+                    } catch (e) {
+                        document.getElementById('specialEditor').style.display = 'block';
+                        document.getElementById('specialCalculator').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('specialEditor').style.display = 'block';
+                    document.getElementById('specialCalculator').style.display = 'none';
+                }
+            });
+            window.scrollTo(0, 0);
+        }
+
+        // ========== 滚动控制 ==========
+        let lastScrollY = window.scrollY;
+        let scrollTimeout = null;
+
+        function handleScroll() {
+            const currentScrollY = window.scrollY;
+            let toolbar = null;
+            if (currentAppMode === 'cars') toolbar = carsToolbar;
+            else if (currentAppMode === 'master') toolbar = masterToolbar;
+            else if (currentAppMode === 'special') toolbar = specialToolbar;
+            if (toolbar) {
+                if (currentScrollY < lastScrollY) { toolbar.classList.remove('hidden'); } else if (currentScrollY > lastScrollY + 10) { toolbar.classList.add('hidden'); }
+            }
+            lastScrollY = currentScrollY;
+            if (currentAppMode === 'cars') {
+                const floatGroup = document.getElementById('floatGroup');
+                if (scrollTimeout) clearTimeout(scrollTimeout);
+                floatGroup.classList.remove('hidden');
+                scrollTimeout = setTimeout(() => { floatGroup.classList.add('hidden'); }, 1500);
+            }
+        }
+
+        function handleToolbarClick(e) {
+            let toolbar = null;
+            if (currentAppMode === 'cars') toolbar = carsToolbar;
+            else if (currentAppMode === 'master') toolbar = masterToolbar;
+            else if (currentAppMode === 'special') toolbar = specialToolbar;
+            if (toolbar) toolbar.classList.remove('hidden');
+        }
+
+        function handleFloatGroupClick() {
+            const floatGroup = document.getElementById('floatGroup');
+            floatGroup.classList.remove('hidden');
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => { floatGroup.classList.add('hidden'); }, 2000);
+        }
+
+        // ========== 事件绑定 ==========
+        function bindEvents() {
+            sortFieldSelect.addEventListener('change', () => { currentSortField = sortFieldSelect.value; renderCars(); });
+            sortOrderSelect.addEventListener('change', () => { currentSortOrder = sortOrderSelect.value; renderCars(); });
+            brandSelect.addEventListener('change', (e) => { currentBrand = e.target.value; renderCars(); });
+            leagueSelect.addEventListener('change', (e) => { currentLeague = e.target.value; renderCars(); });
+            searchInput.addEventListener('input', (e) => { currentSearch = e.target.value; renderCars(); });
+            const modeBtns = document.querySelectorAll('.mode-btn');
+            modeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    sortMode = btn.getAttribute('data-mode');
+                    modeBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderCars();
+                });
+            });
+            compareBtn.addEventListener('click', () => {
+                if (compareMode) exitCompareMode();
+                else { compareMode = true; renderCars(); compareBtn.classList.add('active'); compareBtn.innerHTML = '✖'; compareBtn.style.background = "#ef4444"; exitCompareBtn.style.display = 'block'; }
+            });
+            exitCompareBtn.addEventListener('click', () => exitCompareMode());
+            backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+            helpBtn.addEventListener('click', showHelpModal);
+            helpBtnMaster.addEventListener('click', showHelpModal);
+            helpBtnSpecial.addEventListener('click', showHelpModal);
+            window.addEventListener('scroll', handleScroll);
+            document.querySelectorAll('.toolbar').forEach(tb => { tb.addEventListener('click', handleToolbarClick); });
+            document.getElementById('floatGroup').addEventListener('click', handleFloatGroupClick);
+
+            document.getElementById('toggleEditorMode').addEventListener('click', () => {
+                document.getElementById('specialEditor').style.display = 'block';
+                document.getElementById('specialCalculator').style.display = 'none';
+            });
+            document.getElementById('toggleCalculatorMode').addEventListener('click', () => {
+                saveEventDataFromEditor();
+                document.getElementById('specialEditor').style.display = 'none';
+                document.getElementById('specialCalculator').style.display = 'block';
+                renderCalculator();
+            });
+            document.getElementById('previewCalculator').addEventListener('click', () => {
+                saveEventDataFromEditor();
+                document.getElementById('specialEditor').style.display = 'none';
+                document.getElementById('specialCalculator').style.display = 'block';
+                renderCalculator();
+            });
+            document.getElementById('saveEventData').addEventListener('click', () => {
+                saveEventDataFromEditor();
+                alert('赛事数据已保存！');
+            });
+            document.getElementById('syncToRemoteBtn').addEventListener('click', syncToRemote);
+            document.getElementById('clearEventDataBtn').addEventListener('click', () => {
+                if (confirm('确定要清空所有特殊赛事数据吗？此操作不可撤销。')) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    specialEventData = null;
+                    selectedTools = [];
+                    stages = [];
+                    milestones = [];
+                    clubRewards = [];
+                    calcVehicleStates = {};
+                    document.getElementById('specialEditor').style.display = 'block';
+                    document.getElementById('specialCalculator').style.display = 'none';
+                    renderToolList();
+                    renderStages();
+                    renderMilestones();
+                    renderClubRewards();
+                    alert('数据已清空！');
+                }
+            });
+
+            const toolSearchInput = document.getElementById('toolSearchInput');
+            toolSearchInput.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                const results = document.getElementById('toolSearchResults');
+                if (query.length === 0) { results.classList.remove('visible'); return; }
+                const matches = vehiclesData.filter(v => v.name.toLowerCase().includes(query) || (v.nickname && v.nickname.toLowerCase().includes(query)));
+                const existing = selectedTools.map(t => t.toLowerCase());
+                const filtered = matches.filter(v => !existing.includes(v.name.toLowerCase()));
+                if (filtered.length === 0) { results.classList.remove('visible'); return; }
+                results.innerHTML = '';
+                filtered.forEach(v => {
+                    const div = document.createElement('div');
+                    div.className = 'editor-search-result';
+                    div.innerHTML = `<span><span class="car-level">${v.level}</span> ${v.name}</span><span style="font-size:0.8rem; color:#6c757d;">${v.nickname || ''}</span>`;
+                    div.addEventListener('click', () => { addTool(v.name); toolSearchInput.value = ''; results.classList.remove('visible'); });
+                    results.appendChild(div);
+                });
+                results.classList.add('visible');
+            });
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#toolSearchInput') && !e.target.closest('#toolSearchResults')) {
+                    document.getElementById('toolSearchResults').classList.remove('visible');
+                }
+            });
+            document.getElementById('addToolBtn').addEventListener('click', function() {
+                const input = document.getElementById('toolSearchInput');
+                const query = input.value.trim();
+                if (!query) return;
+                const match = vehiclesData.find(v => v.name.toLowerCase() === query.toLowerCase());
+                if (match && !selectedTools.includes(match.name)) { addTool(match.name); input.value = ''; document.getElementById('toolSearchResults').classList.remove('visible'); } else { alert('未找到车辆，请使用搜索框选择。'); }
+            });
+
+            document.getElementById('addStageBtn').addEventListener('click', addStage);
+            document.getElementById('addMilestoneBtn').addEventListener('click', addMilestone);
+            document.getElementById('addClubBtn').addEventListener('click', addClubReward);
+            document.getElementById('calcFillAll').addEventListener('click', fillAllCalc);
+            document.getElementById('calcClearAll').addEventListener('click', clearAllCalc);
+            document.getElementById('fillAllBtn').addEventListener('click', fillMasterAll);
+            document.getElementById('clearAllBtn').addEventListener('click', clearMasterAll);
+        }
+
+        // ========== 初始化 ==========
+        function init() {
+            initDOM();
+            initTheme();
+            populateFilters();
+            bindEvents();
+            goHome();
+            renderCars();
+            // 预加载远程数据（但不阻塞页面）
+            loadRemoteEventData().then(() => {
+                console.log('📦 远程数据预加载完成');
+            });
+            console.log('🚗 狂野飙车9 · 小助手已启动！');
+            console.log('📚 共加载 ' + vehiclesData.length + ' 辆车');
+            console.log('☁️ 远程配置地址: ' + REMOTE_EVENT_URL);
+        }
+
+        function initDOM() {
+            gridContainer = document.getElementById("carsGrid");
+            brandSelect = document.getElementById("brandFilter");
+            leagueSelect = document.getElementById("leagueFilter");
+            sortFieldSelect = document.getElementById("sortField");
+            sortOrderSelect = document.getElementById("sortOrder");
+            searchInput = document.getElementById("searchInput");
+            modeToggle = document.getElementById("modeToggle");
+            helpBtn = document.getElementById("helpBtn");
+            helpBtnMaster = document.getElementById("helpBtnMaster");
+            helpBtnSpecial = document.getElementById("helpBtnSpecial");
+            compareBtn = document.getElementById("floatCompareBtn");
+            themeBtn = document.getElementById("themeBtn");
+            backToTopBtn = document.getElementById("backToTopBtn");
+            exitCompareBtn = document.getElementById("exitCompareBtn");
+
+            document.querySelectorAll('.home-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const target = this.dataset.target;
+                    if (target === 'cars') switchToCars();
+                    else if (target === 'master') switchToMaster();
+                    else if (target === 'special') switchToSpecial();
+                });
+            });
+            document.getElementById('backHomeFromCars').addEventListener('click', goHome);
+            document.getElementById('backHomeFromMaster').addEventListener('click', goHome);
+            document.getElementById('backHomeFromSpecial').addEventListener('click', goHome);
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('a9_theme');
+            if (saved === 'dark') document.body.classList.add('dark');
+            themeBtn.addEventListener('click', () => {
+                document.body.classList.toggle('dark');
+                localStorage.setItem('a9_theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+            });
+        }
+
+        // 数据初始化
+        vehiclesData = processAllVehicles();
+
+        // ========== 启动 ==========
+        init();
+    </script>
+</div>
+</body>
+</html>
